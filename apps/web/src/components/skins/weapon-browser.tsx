@@ -201,7 +201,7 @@ export function WeaponBrowser() {
         payload = {
           type: "knife",
           data: {
-            knife: Number(defindex),
+            knife: skin.weapon_name,
             team: 2,
           },
         };
@@ -217,7 +217,7 @@ export function WeaponBrowser() {
         payload = {
           type: "gloves",
           data: {
-            defindex,
+            defindex: Number(defindex),
             team: 2,
           },
         };
@@ -234,9 +234,9 @@ export function WeaponBrowser() {
           type: "skin",
           data: {
             weapon: skin.weapon_name,
-            paintId,
-            seed,
-            wear,
+            paintId: Number(paintId),
+            seed: Number(seed),
+            wear: Number(wear),
             team: 2,
           },
         };

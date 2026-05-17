@@ -4,18 +4,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-
   try {
-
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
-
     }
 
     const steamid = (session.user as any).steamid;
@@ -68,7 +64,6 @@ export async function POST(req: NextRequest) {
         `;
 
         break;
-
       }
 
       // =====================================
@@ -92,7 +87,7 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             ${steamid},
-            ${Number(knife) || 500},
+            ${knife},
             ${Number(team) || 2}
           )
           ON DUPLICATE KEY UPDATE
@@ -100,7 +95,6 @@ export async function POST(req: NextRequest) {
         `;
 
         break;
-
       }
 
       // =====================================
@@ -132,88 +126,18 @@ export async function POST(req: NextRequest) {
         `;
 
         break;
-
-      }
-
-      // =====================================
-      // MUSIC KIT
-      // =====================================
-
-      case "music": {
-
-        const {
-          musicId,
-          team
-        } = data;
-
-        await prisma.$executeRaw`
-          INSERT INTO wp_player_music
-          (
-            steamid,
-            music_id,
-            weapon_team
-          )
-          VALUES
-          (
-            ${steamid},
-            ${Number(musicId)},
-            ${Number(team) || 2}
-          )
-          ON DUPLICATE KEY UPDATE
-            music_id = VALUES(music_id)
-        `;
-
-        break;
-
-      }
-
-      // =====================================
-      // PINS
-      // =====================================
-
-      case "pin": {
-
-        const {
-          pin,
-          team
-        } = data;
-
-        await prisma.$executeRaw`
-          INSERT INTO wp_player_pins
-          (
-            steamid,
-            pin,
-            weapon_team
-          )
-          VALUES
-          (
-            ${steamid},
-            ${Number(pin)},
-            ${Number(team) || 2}
-          )
-          ON DUPLICATE KEY UPDATE
-            pin = VALUES(pin)
-        `;
-
-        break;
-
       }
 
       default:
-
         return NextResponse.json(
           { error: "Invalid type" },
           { status: 400 }
         );
-
     }
 
     return NextResponse.json({
-
       success: true,
-
       message: `${type} equipped successfully`,
-
     });
 
   } catch (error) {
@@ -229,5 +153,4 @@ export async function POST(req: NextRequest) {
     );
 
   }
-
 }
