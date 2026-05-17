@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             '${steamid}',
-            '${String(weapon || "")}',
+            '${String(weapon || "").replace("weapon_", "")}',
             ${fixedTeam},
             ${fixedPaint},
             ${fixedWear},
