@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             '${steamid}',
-            ${fixedKnife},
+            '${fixedKnife}',
             ${fixedTeam}
           )
           ON DUPLICATE KEY UPDATE
