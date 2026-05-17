@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signIn } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -88,7 +88,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => signIn("steam")}
+                  onClick={() => signOut({ callbackUrl: "/" })}
                   className="text-red-400 focus:text-red-400"
                 >
                   <LogOut className="w-4 h-4 mr-2" />

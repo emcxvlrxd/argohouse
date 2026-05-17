@@ -2,6 +2,8 @@ import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 
+const NEXTAUTH_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
   providers: [
@@ -15,20 +17,23 @@ export const authOptions: NextAuthOptions = {
         params: {
           "openid.ns": "http://specs.openid.net/auth/2.0",
           "openid.mode": "checkid_setup",
-          "openid.return_to": `${process.env.NEXTAUTH_URL}/api/auth/callback/steam`,
-          "openid.realm": process.env.NEXTAUTH_URL,
+          "openid.return_to": `${NEXTAUTH_URL}/api/auth/callback/steam?code=openid_response`,
+          "openid.realm": NEXTAUTH_URL,
           "openid.identity": "http://specs.openid.net/auth/2.0/identifier_select",
           "openid.claimed_id": "http://specs.openid.net/auth/2.0/identifier_select",
         },
       },
       token: {
-        url: "https://steamcommunity.com/openid/login",
-        params: { "openid.mode": "check_authentication" },
+        async request({ params }: any) {
+          return { tokens: params };
+        },
       },
       userinfo: {
         async request({ tokens }: any): Promise<any> {
-          const params = new URLSearchParams(tokens.id_token || "");
-          const claimedId = params.get("openid.claimed_id") || "";
+          const claimedId =
+            tokens?.["openid.claimed_id"] ||
+            tokens?.params?.["openid.claimed_id"] ||
+            "";
           const steamId = claimedId.match(/\/id\/(\d+)$/)?.[1];
           if (!steamId) throw new Error("Invalid Steam ID");
 
@@ -66,20 +71,17 @@ export const authOptions: NextAuthOptions = {
       },
       clientId: process.env.STEAM_API_KEY || "",
       clientSecret: process.env.STEAM_API_KEY || "",
-      checks: ["pkce", "state"] as any,
+      checks: [],
     },
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
         token.steamid = (user as any).steamid;
         token.role = (user as any).role || "user";
         token.username = (user as any).username;
         token.avatar = (user as any).avatar;
-      }
-      if (account && user) {
-        token.steamid64 = (user as any).steamid64;
       }
       return token;
     },
