@@ -208,24 +208,6 @@ export async function POST(req: NextRequest) {
 
     }
 
-    // =====================================
-    // ADMIN LOG
-    // =====================================
-
-    await prisma.adminLog.create({
-
-      data: {
-
-        steamid,
-
-        action: `Equipped ${type}`,
-
-        details: JSON.stringify(data),
-
-      },
-
-    });
-
     return NextResponse.json({
 
       success: true,
