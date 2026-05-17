@@ -6,94 +6,195 @@ import { authOptions } from "@/lib/auth";
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const steamid = (session.user as any).steamid;
     const body = await req.json();
+
     const { type, data } = body;
 
     switch (type) {
+
+      // =========================
+      // WEAPON SKINS
+      // =========================
       case "skin": {
-        const { defindex, paintId, wear, seed, team } = data;
-        const existing = await prisma.playerSkin.findUnique({
-          where: {
-            steamid_weapon_defindex_weapon_team: {
-              steamid,
-              weapon_defindex: defindex,
-              weapon_team: team || 2,
-            },
-          },
-        });
 
-        if (existing) {
-          await prisma.playerSkin.update({
-            where: { id: existing.id },
-            data: {
-              weapon_paint_id: paintId,
-              weapon_wear: wear || 0.000001,
-              weapon_seed: seed || 0,
-            },
-          });
-        } else {
-          await prisma.playerSkin.create({
-            data: {
-              steamid,
-              weapon_defindex: defindex,
-              weapon_paint_id: paintId,
-              weapon_wear: wear || 0.000001,
-              weapon_seed: seed || 0,
-              weapon_team: team || 2,
-            },
-          });
-        }
+        const {
+          weapon,
+          paintId,
+          wear,
+          seed,
+          team
+        } = data;
+
+        await prisma.$executeRaw`
+          INSERT INTO wp_player_skins
+          (
+            steamid,
+            weapon,
+            weapon_team,
+            paint,
+            wear,
+            seed,
+            stattrak
+          )
+          VALUES
+          (
+            ${steamid},
+            ${weapon},
+            ${team || 2},
+            ${paintId},
+            ${wear || 0.000001},
+            ${seed || 0},
+            0
+          )
+          ON DUPLICATE KEY UPDATE
+            paint = VALUES(paint),
+            wear = VALUES(wear),
+            seed = VALUES(seed)
+        `;
+
         break;
       }
 
+      // =========================
+      // KNIFE
+      // =========================
       case "knife": {
-        const { knife, team } = data;
-        for (const t of [2, 3]) {
-          const existing = await prisma.playerKnife.findUnique({
-            where: { steamid_weapon_team: { steamid, weapon_team: t } },
-          });
-          if (existing) {
-            await prisma.playerKnife.update({
-              where: { id: existing.id },
-              data: { knife: knife || "weapon_knife" },
-            });
-          } else {
-            await prisma.playerKnife.create({
-              data: { steamid, weapon_team: t, knife: knife || "weapon_knife" },
-            });
-          }
-        }
+
+        const {
+          knife,
+          team
+        } = data;
+
+        await prisma.$executeRaw`
+          INSERT INTO wp_player_knife
+          (
+            steamid,
+            knife,
+            weapon_team
+          )
+          VALUES
+          (
+            ${steamid},
+            ${knife || "weapon_knife"},
+            ${team || 2}
+          )
+          ON DUPLICATE KEY UPDATE
+            knife = VALUES(knife)
+        `;
+
         break;
       }
 
+      // =========================
+      // GLOVES
+      // =========================
       case "gloves": {
-        const { defindex, team } = data;
-        const existing = await prisma.playerGlove.findUnique({
-          where: { steamid_weapon_team: { steamid, weapon_team: team || 2 } },
-        });
-        if (existing) {
-          await prisma.playerGlove.update({
-            where: { id: existing.id },
-            data: { weapon_defindex: defindex },
-          });
-        } else {
-          await prisma.playerGlove.create({
-            data: { steamid, weapon_defindex: defindex, weapon_team: team || 2 },
-          });
-        }
+
+        const {
+          defindex,
+          team
+        } = data;
+
+        await prisma.$executeRaw`
+          INSERT INTO wp_player_gloves
+          (
+            steamid,
+            weapon_defindex,
+            weapon_team
+          )
+          VALUES
+          (
+            ${steamid},
+            ${defindex},
+            ${team || 2}
+          )
+          ON DUPLICATE KEY UPDATE
+            weapon_defindex = VALUES(weapon_defindex)
+        `;
+
+        break;
+      }
+
+      // =========================
+      // MUSIC KIT
+      // =========================
+      case "music": {
+
+        const {
+          musicId,
+          team
+        } = data;
+
+        await prisma.$executeRaw`
+          INSERT INTO wp_player_music
+          (
+            steamid,
+            music_id,
+            weapon_team
+          )
+          VALUES
+          (
+            ${steamid},
+            ${musicId},
+            ${team || 2}
+          )
+          ON DUPLICATE KEY UPDATE
+            music_id = VALUES(music_id)
+        `;
+
+        break;
+      }
+
+      // =========================
+      // PINS
+      // =========================
+      case "pin": {
+
+        const {
+          pin,
+          team
+        } = data;
+
+        await prisma.$executeRaw`
+          INSERT INTO wp_player_pins
+          (
+            steamid,
+            pin,
+            weapon_team
+          )
+          VALUES
+          (
+            ${steamid},
+            ${pin},
+            ${team || 2}
+          )
+          ON DUPLICATE KEY UPDATE
+            pin = VALUES(pin)
+        `;
+
         break;
       }
 
       default:
-        return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Invalid type" },
+          { status: 400 }
+        );
     }
 
-    // Log the action
+    // =========================
+    // ADMIN LOG
+    // =========================
+
     await prisma.adminLog.create({
       data: {
         steamid,
@@ -102,8 +203,21 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ success: true, message: `${type} equipped successfully` });
+    return NextResponse.json({
+      success: true,
+      message: `${type} equipped successfully`,
+    });
+
   } catch (error) {
-    return NextResponse.json({ success: false, message: "Failed to equip item" }, { status: 500 });
+
+    console.error(error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Failed to equip item",
+      },
+      { status: 500 }
+    );
   }
 }

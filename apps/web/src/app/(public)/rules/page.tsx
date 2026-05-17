@@ -9,54 +9,55 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollText, Shield, Ban, AlertTriangle, Users, Mic, Swords } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 const rules = [
   {
     icon: Shield,
-    title: "Cheating & Hacking",
+    title: "Hile & Korsan Yazılım",
     description:
-      "Any form of cheating, hacking, or using third-party software to gain an unfair advantage is strictly prohibited. This includes wallhacks, aimbots, and triggerbots.",
-    penalty: "Permanent ban",
+      "Her türlü hile, korsan yazılım veya haksız avantaj sağlayan üçüncü parti yazılım kullanımı kesinlikle yasaktır. Wallhack, aimbot ve triggerbot dahildir.",
+    penalty: "Kalıcı yasaklama",
     severity: "critical",
   },
   {
     icon: Mic,
-    title: "Voice & Chat Abuse",
+    title: "Ses & Sohbet Kötüye Kullanımı",
     description:
-      "Excessive screaming, mic spamming, racial slurs, harassment, or any form of toxic behavior in voice or text chat will not be tolerated.",
-    penalty: "Warning → 24h mute → 7d ban",
+      "Aşırı bağırma, mikrofon spam'i, ırkçı ifadeler, taciz veya sesli/yazılı sohbette her türlü toksik davranış tolere edilmeyecektir.",
+    penalty: "Uyarı → 24s susturma → 7g yasak",
     severity: "moderate",
   },
   {
     icon: Users,
-    title: "Team Killing & Griefing",
+    title: "Takım Öldürme & Griefing",
     description:
-      "Intentional team killing, team flashing, blocking teammates, or any form of griefing is forbidden.",
-    penalty: "Kick → 24h ban → 7d ban",
+      "Kasti takım öldürme, takım flaşlama, takım arkadaşını engelleme veya her türlü griefing yasaktır.",
+    penalty: "Atılma → 24s yasak → 7g yasak",
     severity: "moderate",
   },
   {
     icon: AlertTriangle,
-    title: "Advertising & Spam",
+    title: "Reklam & Spam",
     description:
-      "Advertising other servers, websites, or products is not allowed. This includes spam messages and repeated announcements.",
-    penalty: "Warning → 24h mute → permanent ban",
+      "Diğer sunucuların, web sitelerinin veya ürünlerin reklamını yapmak yasaktır. Spam mesajlar ve tekrarlanan duyurular dahildir.",
+    penalty: "Uyarı → 24s susturma → kalıcı yasak",
     severity: "moderate",
   },
   {
     icon: Ban,
-    title: "Inappropriate Names",
+    title: "Uygunsuz İsimler",
     description:
-      "Offensive, racist, or sexually explicit names and avatars are not permitted. This applies to both Steam names and in-game tags.",
-    penalty: "Rename request → kick → ban",
+      "Hakaret içeren, ırkçı veya cinsel içerikli isim ve avatarlara izin verilmez. Bu hem Steam isimleri hem de oyun içi etiketler için geçerlidir.",
+    penalty: "İsim değiştirme talebi → atılma → yasak",
     severity: "low",
   },
   {
     icon: Swords,
-    title: "Competitive Integrity",
+    title: "Rekabetçi Dürüstlük",
     description:
-      "Match fixing, boosting, account sharing, or any behavior that compromises competitive integrity is prohibited.",
-    penalty: "Season ban → permanent ban",
+      "Maç fixleme, boosting, hesap paylaşımı veya rekabetçi bütünlüğü bozan her türlü davranış yasaktır.",
+    penalty: "Sezon yasağı → kalıcı yasak",
     severity: "critical",
   },
 ];
@@ -80,9 +81,9 @@ export default function RulesPage() {
             <div className="flex items-center gap-3 mb-6">
               <ScrollText className="w-8 h-8 text-neon-purple" />
               <div>
-                <h1 className="text-2xl font-bold font-display">Server Rules</h1>
+                <h1 className="text-2xl font-bold font-display">{t("Server Rules")}</h1>
                 <p className="text-sm text-muted-foreground">
-                  Violations result in warnings, kicks, or bans
+                  {t("Violations result in warnings, kicks, or bans")}
                 </p>
               </div>
             </div>

@@ -1,7 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSession } from "next-auth/react";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -21,6 +22,7 @@ import {
   Crosshair,
 } from "lucide-react";
 import Link from "next/link";
+import { t } from "@/lib/i18n";
 
 interface ProfileData {
   user: any;
@@ -37,18 +39,24 @@ interface ProfileData {
   };
 }
 
-export default function ProfilePage() {
+function ProfileContent() {
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
+  const viewSteamid = searchParams.get("steamid");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const mySteamid = (session?.user as any)?.steamid;
+  const isOwnProfile = !viewSteamid || viewSteamid === mySteamid;
+  const targetSteamid = isOwnProfile ? mySteamid : viewSteamid;
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const [equipRes, statsRes] = await Promise.all([
-          fetch("/api/skins?type=equipped"),
-          fetch("/api/players?type=stats"),
+          fetch(`/api/skins?type=equipped&steamid=${targetSteamid}`),
+          fetch(`/api/players?type=stats&steamid=${targetSteamid}`),
         ]);
         const equip = await equipRes.json();
         const stats = await statsRes.json();
@@ -66,7 +74,7 @@ export default function ProfilePage() {
       }
     };
     if (session) fetchProfile();
-  }, [session]);
+  }, [session, targetSteamid]);
 
   if (!session) redirect("/");
 
@@ -116,10 +124,10 @@ export default function ProfilePage() {
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { icon: Swords, label: "Total Kills", value: profile?.stats.totalKills.toLocaleString() || "0", color: "from-rose-500 to-pink-600" },
-                    { icon: Clock, label: "Playtime", value: `${Math.floor((profile?.stats.totalPlaytime || 0) / 3600)}h`, color: "from-cyan-500 to-blue-600" },
-                    { icon: Crosshair, label: "K/D", value: (profile?.stats.kd || 0).toFixed(2), color: "from-amber-500 to-orange-600" },
-                    { icon: Palette, label: "Skins Set", value: profile?.equipment.skins.toString() || "0", color: "from-purple-500 to-violet-600" },
+                    { icon: Swords, label: t("Total Kills"), value: profile?.stats.totalKills.toLocaleString() || "0", color: "from-rose-500 to-pink-600" },
+                    { icon: Clock, label: t("Playtime"), value: `${Math.floor((profile?.stats.totalPlaytime || 0) / 3600)}h`, color: "from-cyan-500 to-blue-600" },
+                    { icon: Crosshair, label: t("K/D"), value: (profile?.stats.kd || 0).toFixed(2), color: "from-amber-500 to-orange-600" },
+                    { icon: Palette, label: t("Skins Set"), value: profile?.equipment.skins.toString() || "0", color: "from-purple-500 to-violet-600" },
                   ].map((stat, i) => (
                     <motion.div
                       key={stat.label}
@@ -145,22 +153,24 @@ export default function ProfilePage() {
                         <Palette className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">Equipment Summary</h3>
-                        <p className="text-xs text-muted-foreground">Your current loadout</p>
+                        <h3 className="font-semibold">{t("Equipment Summary")}</h3>
+                        <p className="text-xs text-muted-foreground">{t("Current loadout")}</p>
                       </div>
                     </div>
-                    <Link href="/skins">
-                      <button className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 h-9 rounded-lg px-3 text-xs bg-gradient-to-r from-neon-purple to-purple-600 text-white shadow-lg">
-                        Customize
-                      </button>
-                    </Link>
+                    {isOwnProfile && (
+                      <Link href="/skins">
+                        <button className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 h-9 rounded-lg px-3 text-xs bg-gradient-to-r from-neon-purple to-purple-600 text-white shadow-lg">
+                          {t("Customize")}
+                        </button>
+                      </Link>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { icon: Swords, label: "Knives", value: `${profile?.equipment.knife} equipped` },
-                      { icon: HandMetal, label: "Gloves", value: `${profile?.equipment.gloves} equipped` },
-                      { icon: User, label: "Agents", value: profile?.equipment.agents ? "Custom" : "Default" },
-                      { icon: Palette, label: "Skins", value: `${profile?.equipment.skins} items` },
+                      { icon: Swords, label: t("Knives"), value: `${profile?.equipment.knife} ${t("equipped")}` },
+                      { icon: HandMetal, label: t("Gloves"), value: `${profile?.equipment.gloves} ${t("equipped")}` },
+                      { icon: User, label: t("Agents"), value: profile?.equipment.agents ? t("Custom") : t("Default") },
+                      { icon: Palette, label: t("Skins"), value: `${profile?.equipment.skins} ${t("items")}` },
                     ].map((item) => (
                       <div key={item.label} className="glass rounded-xl p-3 text-center">
                         <item.icon className="w-5 h-5 mx-auto mb-1 text-neon-cyan" />
@@ -176,5 +186,17 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Skeleton className="h-48 w-96" />
+      </div>
+    }>
+      <ProfileContent />
+    </Suspense>
   );
 }

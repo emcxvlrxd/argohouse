@@ -2,18 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { readFileSync, existsSync, readdirSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join } from "path";
+import { WEAPON_CATEGORIES, WEAPON_DISPLAY_NAMES } from "@/lib/weapon-categories";
+import { getCdnImage } from "@/lib/skin-images";
 
 export const dynamic = "force-dynamic";
 
 const DATA_DIR = join(process.cwd(), "data");
 
 function loadJson(filename: string): any[] {
+  const lang = "_en";
   const paths = [
+    join(DATA_DIR, `${filename}${lang}.json`),
     join(DATA_DIR, `${filename}.json`),
-    join(DATA_DIR, `${filename}_tr.json`),
-    join(DATA_DIR, `${filename}_en.json`),
   ];
   for (const p of paths) {
     if (existsSync(p)) {
@@ -27,6 +29,22 @@ function loadJson(filename: string): any[] {
   return [];
 }
 
+function normalizeSkin(s: any): any {
+  return {
+    ...s,
+    paint_id: Number(s.paint) || 0,
+    weapon_defindex: s.weapon_defindex || 0,
+    paint_name: s.paint_name || "Unknown",
+  };
+}
+
+async function addCdnImage(skins: any[]): Promise<any[]> {
+  return Promise.all(skins.map(async (s) => {
+    const cdn = await getCdnImage(s.weapon_defindex, Number(s.paint) || 0);
+    return cdn ? { ...s, cdnImage: cdn } : s;
+  }));
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -34,116 +52,98 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const type = req.nextUrl.searchParams.get("type");
+    const type = req.nextUrl.searchParams.get("type") || "";
     const steamid = (session.user as any).steamid;
 
-    switch (type) {
-      case "knives": {
-        const all = loadJson("skins");
-        const knives = all.filter((s) => (s.weapon_defindex || 0) >= 500);
-        return NextResponse.json({ skins: knives });
-      }
-
-      case "gloves": {
-        const gloves = loadJson("gloves");
-        return NextResponse.json({ skins: gloves });
-      }
-
-      case "agents": {
-        const agents = loadJson("agents");
-        return NextResponse.json({ skins: agents });
-      }
-
-      case "music": {
-        const music = loadJson("music");
-        return NextResponse.json({ skins: music });
-      }
-
-      case "weapons": {
-        const all = loadJson("skins");
-        const seen = new Set<string>();
-        const weapons: any[] = [];
-
-        for (const s of all) {
-          const di = s.weapon_defindex || 0;
-          if (di >= 500 || di === 0) continue;
-          const wn = s.weapon_name || "Other";
-          if (seen.has(wn)) continue;
-          seen.add(wn);
-
-          const displayNames: Record<string, string> = {
-            weapon_ak47: "AK-47",
-            weapon_m4a1: "M4A4",
-            weapon_m4a1_silencer: "M4A1-S",
-            weapon_awp: "AWP",
-            weapon_deagle: "Desert Eagle",
-            weapon_usp_silencer: "USP-S",
-            weapon_glock: "Glock-18",
-            weapon_hkp2000: "P2000",
-            weapon_elite: "Dual Berettas",
-            weapon_fiveseven: "Five-SeveN",
-            weapon_tec9: "Tec-9",
-            weapon_cz75a: "CZ75-Auto",
-            weapon_revolver: "R8 Revolver",
-            weapon_p250: "P250",
-            weapon_famas: "FAMAS",
-            weapon_galilar: "Galil AR",
-            weapon_aug: "AUG",
-            weapon_sg556: "SG 553",
-            weapon_ssg08: "SSG 08",
-            weapon_scar20: "SCAR-20",
-            weapon_g3sg1: "G3SG1",
-            weapon_mac10: "MAC-10",
-            weapon_mp9: "MP9",
-            weapon_mp7: "MP7",
-            weapon_mp5sd: "MP5-SD",
-            weapon_ump45: "UMP-45",
-            weapon_p90: "P90",
-            weapon_bizon: "PP-Bizon",
-            weapon_nova: "Nova",
-            weapon_xm1014: "XM1014",
-            weapon_mag7: "MAG-7",
-            weapon_sawedoff: "Sawed-Off",
-            weapon_m249: "M249",
-            weapon_negev: "Negev",
-            weapon_taser: "Zeus x27",
-          };
-
-          weapons.push({
-            name: wn,
-            display: displayNames[wn] || wn.replace("weapon_", ""),
-            defindex: di,
-          });
-        }
-
-        weapons.sort((a, b) => a.defindex - b.defindex);
-        return NextResponse.json({ weapons });
-      }
-
-      case "skins": {
-        const defindex = parseInt(req.nextUrl.searchParams.get("defindex") || "0");
-        if (!defindex) return NextResponse.json({ skins: [] });
-
-        const all = loadJson("skins");
-        const result = all.filter((s) => (s.weapon_defindex || 0) === defindex);
-        return NextResponse.json({ skins: result });
-      }
-
-      case "equipped": {
-        const [skins, knife, gloves, agents, music] = await Promise.all([
-          prisma.playerSkin.findMany({ where: { steamid } }),
-          prisma.playerKnife.findMany({ where: { steamid } }),
-          prisma.playerGlove.findMany({ where: { steamid } }),
-          prisma.playerAgent.findUnique({ where: { steamid } }),
-          prisma.playerMusic.findMany({ where: { steamid } }),
-        ]);
-
-        return NextResponse.json({ skins, knife, gloves, agents, music });
-      }
-
-      default:
-        return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+    if (type === "knives") {
+      const all = loadJson("skins").map(normalizeSkin);
+      const knives = all.filter((s) => s.weapon_defindex >= 500);
+      return NextResponse.json({ skins: await addCdnImage(knives) });
     }
+
+    if (type === "gloves") {
+      const gloves = loadJson("gloves").map((g: any) => {
+        const paintName = g.paint_name || g.name || "Unknown Gloves";
+        const gloveType = paintName.includes(" | ") ? paintName.split(" | ")[0].trim() : "Gloves";
+        return {
+          ...g,
+          paint_id: Number(g.paint) || 0,
+          weapon_defindex: g.weapon_defindex || 0,
+          paint_name: paintName,
+          weapon_name: gloveType,
+        };
+      });
+      return NextResponse.json({ skins: await addCdnImage(gloves) });
+    }
+
+    if (type === "agents") {
+      const agents = loadJson("agents").map((a: any) => ({
+        paint_name: a.agent_name || a.name || "Unknown Agent",
+        weapon_name: a.team === 2 ? "T" : a.team === 3 ? "CT" : "Agent",
+        image: a.image || "",
+        paint_id: a.team === 2 ? 2 : a.team === 3 ? 3 : 0,
+        weapon_defindex: a.team === 2 ? 2 : a.team === 3 ? 3 : 0,
+        rarity: "3",
+        team: a.team,
+      }));
+      return NextResponse.json({ skins: agents });
+    }
+
+    if (type === "music") {
+      const music = loadJson("music").map((m: any) => ({
+        paint_name: m.name || "Unknown Music Kit",
+        weapon_name: "Music Kit",
+        image: m.image || "",
+        paint_id: m.id || 0,
+        weapon_defindex: 0,
+        rarity: "4",
+      }));
+      return NextResponse.json({ skins: music });
+    }
+
+    if (type === "weapons") {
+      const all = loadJson("skins").map(normalizeSkin);
+      const seen = new Set<string>();
+      const weapons: any[] = [];
+
+      for (const s of all) {
+        const di = s.weapon_defindex || 0;
+        if (di >= 500 || di === 0) continue;
+        const wn = s.weapon_name || "Other";
+        if (seen.has(wn)) continue;
+        seen.add(wn);
+
+        weapons.push({
+          name: wn,
+          display: WEAPON_DISPLAY_NAMES[wn] || wn.replace("weapon_", ""),
+          defindex: di,
+        });
+      }
+
+      weapons.sort((a, b) => a.defindex - b.defindex);
+      return NextResponse.json({ weapons });
+    }
+
+    if (type === "equipped") {
+      const targetSteamid = req.nextUrl.searchParams.get("steamid") || steamid;
+      const [skins, knife, gloves, agents, music] = await Promise.all([
+        prisma.playerSkin.findMany({ where: { steamid: targetSteamid } }),
+        prisma.playerKnife.findMany({ where: { steamid: targetSteamid } }),
+        prisma.playerGlove.findMany({ where: { steamid: targetSteamid } }),
+        prisma.playerAgent.findUnique({ where: { steamid: targetSteamid } }),
+        prisma.playerMusic.findMany({ where: { steamid: targetSteamid } }),
+      ]);
+      return NextResponse.json({ skins, knife, gloves, agents, music });
+    }
+
+    const defindexes = WEAPON_CATEGORIES[type];
+    if (defindexes) {
+      const all = loadJson("skins").map(normalizeSkin);
+      const result = all.filter((s) => defindexes.includes(s.weapon_defindex));
+      return NextResponse.json({ skins: await addCdnImage(result) });
+    }
+
+    return NextResponse.json({ error: "Invalid type" }, { status: 400 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch skins" }, { status: 500 });
   }

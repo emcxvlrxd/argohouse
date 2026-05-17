@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { Trophy, Swords, Clock, Crown } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 interface LeaderboardEntry {
   steamid: string;
@@ -60,8 +61,8 @@ export default function LeaderboardPage() {
             <div className="flex items-center gap-3 mb-6">
               <Trophy className="w-8 h-8 text-amber-400" />
               <div>
-                <h1 className="text-2xl font-bold font-display">Leaderboard</h1>
-                <p className="text-sm text-muted-foreground">Weekly rankings</p>
+                <h1 className="text-2xl font-bold font-display">{t("Leaderboard")}</h1>
+                <p className="text-sm text-muted-foreground">{t("Weekly rankings")}</p>
               </div>
             </div>
 

@@ -9,6 +9,23 @@ export async function GET(req: NextRequest) {
 
     switch (type) {
       case "stats": {
+        const targetSteamid = req.nextUrl.searchParams.get("steamid");
+
+        if (targetSteamid) {
+          const stats = await prisma.weeklyStat.aggregate({
+            where: { steamid: targetSteamid },
+            _sum: { kills: true, playtime: true, deaths: true },
+          });
+          const kills = stats._sum.kills || 0;
+          const deaths = stats._sum.deaths || 0;
+          const playtime = stats._sum.playtime || 0;
+          return NextResponse.json({
+            totalKills: kills,
+            totalPlaytime: playtime,
+            kd: deaths > 0 ? parseFloat((kills / deaths).toFixed(2)) : kills,
+          });
+        }
+
         const totalKills = await prisma.weeklyStat.aggregate({
           _sum: { kills: true },
         });

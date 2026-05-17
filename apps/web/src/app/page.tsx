@@ -14,6 +14,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { useState, useEffect } from "react";
+import { t } from "@/lib/i18n";
 import {
   Crosshair,
   Sparkles,
@@ -65,15 +66,15 @@ export default function HomePage() {
           <main className="p-4 lg:p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold font-display">Dashboard</h1>
+                <h1 className="text-2xl font-bold font-display">{t("Dashboard")}</h1>
                 <p className="text-sm text-muted-foreground">
-                  Welcome back, {(session.user as any)?.username}
+                  {t("Welcome back")}, {(session.user as any)?.username}
                 </p>
               </div>
               <Link href="/skins">
                 <Button variant="glow" size="sm">
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Customize Skins
+                  {t("Customize Skins")}
                 </Button>
               </Link>
             </div>
@@ -98,26 +99,26 @@ export default function HomePage() {
                     <Zap className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Quick Actions</h3>
+                    <h3 className="font-semibold">{t("Quick Actions")}</h3>
                     <p className="text-xs text-muted-foreground">
-                      Server management
+                      {t("Server management")}
                     </p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <ActionButton
                     href="/skins"
-                    label="Browse Weapon Skins"
+                    label={t("Browse Weapon Skins")}
                     icon={Sparkles}
                   />
                   <ActionButton
                     href="/leaderboard"
-                    label="View Leaderboard"
+                    label={t("View Leaderboard")}
                     icon={Shield}
                   />
                   <ActionButton
                     href="/players"
-                    label="Player List"
+                    label={t("Player List")}
                     icon={Crosshair}
                   />
                 </div>
@@ -176,7 +177,7 @@ function LandingPage() {
             <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
               <path d="M12 2C6.48 2 2 6.48 2 12c0 5.48 4.48 10 10 10s10-4.52 10-10S17.52 2 12 2zm-2 15l-5-3 5-3v6zm4-3V7l5 3-5 3z"/>
             </svg>
-            Sign in with Steam
+            {t("Sign in with Steam")}
           </Button>
         </nav>
 
@@ -188,17 +189,17 @@ function LandingPage() {
           >
             <Badge variant="purple" className="mb-6 px-4 py-1.5 text-sm">
               <Sparkles className="w-3 h-3 mr-1" />
-              Premium CS2 Community Server
+              {t("Premium CS2 Community Server")}
             </Badge>
 
             <h1 className="text-5xl md:text-7xl font-black font-display leading-tight mb-6">
-              Welcome to{" "}
+              {t("Welcome to")}{" "}
               <span className="text-gradient">FENA CS2</span>
             </h1>
 
             <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-              Premium Counter-Strike 2 community experience. Custom weapon paints,
-              competitive matchmaking, and active administration 24/7.
+              Premium Counter-Strike 2 topluluk deneyimi. Özel silah kaplamaları,
+              rekabetçi eşleştirme ve 7/24 aktif yönetim.
             </p>
 
             <div className="flex items-center justify-center gap-4">
@@ -208,11 +209,11 @@ function LandingPage() {
                 onClick={() => window.location.href = "/api/auth/steam"}
               >
                 <Crosshair className="w-5 h-5 mr-2" />
-                Get Started
+                {t("Get Started")}
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <a href="#features">
-                  Learn More
+                  {t("Learn More")}
                 </a>
               </Button>
             </div>
@@ -225,9 +226,9 @@ function LandingPage() {
             className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto"
           >
             {[
-              { icon: Palette, label: "Weapon Paints", value: "2000+ Skins" },
-              { icon: Zap, label: "Server", value: "128 Tick" },
-              { icon: Shield, label: "Uptime", value: "99.9%" },
+              { icon: Palette, label: t("Weapon Paints"), value: "2000+ Kaplama" },
+              { icon: Zap, label: t("Server"), value: "128 Tick" },
+              { icon: Shield, label: t("Uptime"), value: "99.9%" },
             ].map((item, i) => {
               const Icon = item.icon;
               return (
@@ -252,7 +253,7 @@ function LandingPage() {
 
         <section id="features" className="px-6 py-20 max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12 font-display">
-            Premium <span className="text-gradient">Features</span>
+            Premium <span className="text-gradient">{t("Features")}</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {features.map((feature, i) => {
@@ -287,7 +288,7 @@ function LandingPage() {
               FENA CS2 &copy; {new Date().getFullYear()}
             </div>
             <p className="text-xs text-muted-foreground">
-              Not affiliated with Valve Corporation. Powered by Next.js.
+              Valve Corporation ile bağlantılı değildir. Next.js ile güçlendirilmiştir.
             </p>
           </div>
         </footer>
@@ -299,39 +300,39 @@ function LandingPage() {
 const features = [
   {
     icon: Palette,
-    title: "Weapon Paints",
+    title: t("Weapon Paints"),
     description:
-      "Browse and equip from 2000+ weapon skins, knives, gloves, agents, and music kits directly from our web panel.",
+      "Web panelimizden 2000+ silah kaplaması, bıçak, eldiven, ajan ve müzik kitine göz atın ve kuşanın.",
   },
   {
     icon: Shield,
-    title: "Anti-Cheat",
+    title: t("Anti-Cheat"),
     description:
-      "Advanced anti-cheat protection with 24/7 active administration and fair-play enforcement.",
+      "7/24 aktif yönetim ve adil oyun denetimi ile gelişmiş hile koruması.",
   },
   {
     icon: Trophy,
-    title: "Competitive",
+    title: t("Competitive"),
     description:
-      "Ranked matchmaking with weekly leaderboards, K/D tracking, and performance statistics.",
+      "Haftalık liderlik tabloları, K/D takibi ve performans istatistikleri ile sıralı eşleştirme.",
   },
   {
     icon: Users,
-    title: "Community",
+    title: t("Community"),
     description:
-      "Active community with events, tournaments, and a dedicated player support system.",
+      "Etkinlikler, turnuvalar ve özel oyuncu destek sistemi ile aktif topluluk.",
   },
   {
     icon: Zap,
-    title: "Performance",
+    title: t("Performance"),
     description:
-      "128 tickrate servers with low latency and high performance for the best competitive experience.",
+      "En iyi rekabetçi deneyim için düşük gecikmeli ve yüksek performanslı 128 tickrate sunucular.",
   },
   {
     icon: Sparkles,
-    title: "Premium UI",
+    title: t("Premium UI"),
     description:
-      "Modern, responsive dashboard with real-time server status and comprehensive player statistics.",
+      "Gerçek zamanlı sunucu durumu ve kapsamlı oyuncu istatistikleri ile modern, duyarlı panel.",
   },
 ];
 

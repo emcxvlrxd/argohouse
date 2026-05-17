@@ -37,6 +37,7 @@ export const authOptions: NextAuthOptions = {
           steamid64: user.steamid64,
           username: user.username,
           avatar: user.avatar,
+          avatarfull: user.avatarfull,
           role: user.role,
         };
       },
@@ -51,6 +52,7 @@ export const authOptions: NextAuthOptions = {
         token.role = (user as any).role || "user";
         token.username = (user as any).username;
         token.avatar = (user as any).avatar;
+        token.avatarfull = (user as any).avatarfull;
       }
       return token;
     },
@@ -62,6 +64,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).role = token.role;
         (session.user as any).username = token.username;
         (session.user as any).avatar = token.avatar;
+        (session.user as any).avatarfull = token.avatarfull;
       }
       return session;
     },

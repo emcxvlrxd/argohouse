@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Menu, LogOut, User, Shield, Crosshair } from "lucide-react";
 import Link from "next/link";
+import { t } from "@/lib/i18n";
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -35,7 +36,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
           <div className="hidden sm:flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse-glow" />
             <span className="text-sm text-emerald-400 font-medium">
-              Server Online
+              {t("Online")}
             </span>
           </div>
         </div>
@@ -55,7 +56,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                   </div>
                   <Avatar className="h-8 w-8 ring-2 ring-purple-500/30">
                     <AvatarImage
-                      src={(session.user as any).avatar}
+                      src={(session.user as any).avatarfull || (session.user as any).avatar}
                       alt={(session.user as any).username}
                     />
                     <AvatarFallback>
@@ -75,14 +76,14 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                 <DropdownMenuItem asChild>
                   <Link href="/profile" className="cursor-pointer">
                     <User className="w-4 h-4 mr-2" />
-                    Profile
+                    {t("Profile")}
                   </Link>
                 </DropdownMenuItem>
                 {(session.user as any).role === "admin" && (
                   <DropdownMenuItem asChild>
                     <Link href="/admin" className="cursor-pointer">
                       <Shield className="w-4 h-4 mr-2" />
-                      Admin Panel
+                      {t("Admin Panel")}
                     </Link>
                   </DropdownMenuItem>
                 )}
@@ -92,7 +93,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
                   className="text-red-400 focus:text-red-400"
                 >
                   <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
+                  {t("Sign Out")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -104,7 +105,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2C6.48 2 2 6.48 2 12c0 5.48 4.48 10 10 10s10-4.52 10-10S17.52 2 12 2zm-2 15l-5-3 5-3v6zm4-3V7l5 3-5 3z"/>
               </svg>
-              Sign in with Steam
+              {t("Sign in with Steam")}
             </Button>
           )}
         </div>

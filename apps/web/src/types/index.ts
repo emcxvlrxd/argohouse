@@ -37,6 +37,7 @@ export interface SkinItem {
   weapon_defindex: number;
   rarity: string;
   image?: string;
+  cdnImage?: string;
 }
 
 export interface WeaponCategory {
