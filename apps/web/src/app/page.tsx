@@ -13,7 +13,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Crosshair,
   Sparkles,
@@ -26,6 +26,17 @@ import {
 export default function HomePage() {
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const steamid = params.get("steam_login");
+    const sig = params.get("sig");
+    if (steamid && sig) {
+      window.history.replaceState({}, "", "/");
+      signIn("steam-credentials", { steamid, sig, callbackUrl: "/dashboard" });
+    }
+  }, []);
 
   if (!session) {
     return <LandingPage />;
@@ -159,7 +170,7 @@ function LandingPage() {
             <span className="font-bold text-xl font-display">FENA CS2</span>
           </div>
           <Button
-            onClick={() => signIn("steam")}
+            onClick={() => window.location.href = "/api/auth/steam"}
             className="bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:from-[#1b1f27] hover:to-[#2f526c]"
           >
             <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -194,7 +205,7 @@ function LandingPage() {
               <Button
                 size="lg"
                 variant="glow"
-                onClick={() => signIn("steam")}
+                onClick={() => window.location.href = "/api/auth/steam"}
               >
                 <Crosshair className="w-5 h-5 mr-2" />
                 Get Started

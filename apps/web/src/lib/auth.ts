@@ -1,20 +1,57 @@
 import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { createHmac } from "node:crypto";
 import { prisma } from "./prisma";
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      id: "placeholder",
-      name: "Placeholder",
-      credentials: {},
-      async authorize() {
-        return null;
+      id: "steam-credentials",
+      name: "Steam",
+      credentials: {
+        steamid: { label: "SteamID", type: "text" },
+        sig: { label: "Signature", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.steamid || !credentials?.sig) return null;
+
+        const expectedSig = createHmac("sha256", process.env.NEXTAUTH_SECRET!)
+          .update(credentials.steamid)
+          .digest("hex");
+
+        if (credentials.sig !== expectedSig) return null;
+
+        const user = await prisma.user.findUnique({
+          where: { steamid: credentials.steamid },
+        });
+        if (!user) return null;
+
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { last_login: new Date() },
+        });
+
+        return {
+          id: user.id,
+          steamid: user.steamid,
+          steamid64: user.steamid64,
+          username: user.username,
+          avatar: user.avatar,
+          role: user.role,
+        };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.steamid = (user as any).steamid;
+        token.steamid64 = (user as any).steamid64;
+        token.role = (user as any).role || "user";
+        token.username = (user as any).username;
+        token.avatar = (user as any).avatar;
+      }
       return token;
     },
     async session({ session, token }) {
@@ -31,7 +68,7 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: "/",
-    error: "/",
+    error: "/error",
   },
   session: {
     strategy: "jwt",
