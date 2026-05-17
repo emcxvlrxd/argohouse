@@ -3,9 +3,9 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
-  Knife,
-  Hand,
-  Gun,
+  Swords,
+  HandMetal,
+  Crosshair,
   Music,
   Users,
   Sparkles,
@@ -19,10 +19,10 @@ interface Category {
 }
 
 const categories: Category[] = [
-  { id: "knives", label: "Knives", icon: Knife },
-  { id: "gloves", label: "Gloves", icon: Hand },
-  { id: "rifles", label: "Rifles", icon: Gun },
-  { id: "pistols", label: "Pistols", icon: Gun },
+  { id: "knives", label: "Knives", icon: Swords },
+  { id: "gloves", label: "Gloves", icon: HandMetal },
+  { id: "rifles", label: "Rifles", icon: Crosshair },
+  { id: "pistols", label: "Pistols", icon: Crosshair },
   { id: "agents", label: "Agents", icon: Users },
   { id: "music", label: "Music Kits", icon: Music },
 ];

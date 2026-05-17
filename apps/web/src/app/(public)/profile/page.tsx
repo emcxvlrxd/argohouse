@@ -14,10 +14,9 @@ import { motion } from "framer-motion";
 import {
   User,
   Palette,
-  Knife,
-  Hand,
   Clock,
   Swords,
+  HandMetal,
   ExternalLink,
   Crosshair,
 } from "lucide-react";
@@ -158,8 +157,8 @@ export default function ProfilePage() {
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
-                      { icon: Knife, label: "Knives", value: `${profile?.equipment.knife} equipped` },
-                      { icon: Hand, label: "Gloves", value: `${profile?.equipment.gloves} equipped` },
+                      { icon: Swords, label: "Knives", value: `${profile?.equipment.knife} equipped` },
+                      { icon: HandMetal, label: "Gloves", value: `${profile?.equipment.gloves} equipped` },
                       { icon: User, label: "Agents", value: profile?.equipment.agents ? "Custom" : "Default" },
                       { icon: Palette, label: "Skins", value: `${profile?.equipment.skins} items` },
                     ].map((item) => (

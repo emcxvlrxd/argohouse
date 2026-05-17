@@ -5,7 +5,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlayerEquipment } from "@/types";
-import { Backpack, Knife, Hand, Music, Users } from "lucide-react";
+import { Package, Swords, HandMetal, Music, Users } from "lucide-react";
 
 export function EquippedPanel() {
   const [equipment, setEquipment] = useState<PlayerEquipment | null>(null);
@@ -45,7 +45,7 @@ export function EquippedPanel() {
     <GlassCard glow="cyan">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-          <Backpack className="w-5 h-5 text-white" />
+          <Package className="w-5 h-5 text-white" />
         </div>
         <div>
           <h3 className="font-semibold">Your Equipment</h3>
@@ -61,14 +61,14 @@ export function EquippedPanel() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {equipment?.knife && equipment.knife.length > 0 && (
             <EquipmentItem
-              icon={Knife}
-              label="Knife"
-              value={equipment.knife[0]?.knife || "Default"}
-            />
-          )}
-          {equipment?.gloves && equipment.gloves.length > 0 && (
-            <EquipmentItem
-              icon={Hand}
+      icon={Swords}
+      label="Knife"
+      value={equipment.knife[0]?.knife || "Default"}
+    />
+  )}
+  {equipment?.gloves && equipment.gloves.length > 0 && (
+    <EquipmentItem
+      icon={HandMetal}
               label="Gloves"
               value={`Set (${equipment.gloves.length})`}
             />
