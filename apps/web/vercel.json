@@ -1,0 +1,16 @@
+{
+  "buildCommand": "cd apps/web && npx prisma generate && next build",
+  "installCommand": "cd apps/web && npm install",
+  "outputDirectory": ".next",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/weekly",
+      "schedule": "0 0 * * 0"
+    },
+    {
+      "path": "/api/cron/daily",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

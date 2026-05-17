@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model User {
+  id            String    @id @default(cuid())
+  steamid       String    @unique
+  steamid64     String?   @unique
+  username      String?
+  avatar        String?
+  avatarfull    String?
+  role          String    @default("user")
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  last_login    DateTime  @default(now())
+  isBanned      Boolean   @default(false)
+  banReason     String?
+  banExpires    DateTime?
+
+  accounts     Account[]
+  sessions     Session[]
+  skins        PlayerSkin[]
+  knives       PlayerKnife[]
+  gloves       PlayerGlove[]
+  agents       PlayerAgent[]
+  music        PlayerMusic[]
+  weeklyStats  WeeklyStat[]
+  dailyPlayer  DailyPlayer?
+  complaints   Complaint[]
+  adminLogs    AdminLog[]
+  reports      Report[]
+  appeals      Appeal[]
+}
+
+model PlayerSkin {
+  id             Int      @id @default(autoincrement())
+  steamid        String
+  weapon_team    Int      @default(2)
+  weapon_defindex Int
+  weapon_paint_id Int
+  weapon_wear    Float    @default(0.0)
+  weapon_seed    Int      @default(0)
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@unique([steamid, weapon_defindex, weapon_team])
+  @@index([steamid])
+}
+
+model PlayerKnife {
+  id          Int      @id @default(autoincrement())
+  steamid     String
+  weapon_team Int      @default(2)
+  knife       String   @default("weapon_knife")
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@unique([steamid, weapon_team])
+  @@index([steamid])
+}
+
+model PlayerGlove {
+  id              Int      @id @default(autoincrement())
+  steamid         String
+  weapon_team     Int      @default(2)
+  weapon_defindex Int      @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@unique([steamid, weapon_team])
+  @@index([steamid])
+}
+
+model PlayerAgent {
+  id       Int    @id @default(autoincrement())
+  steamid  String @unique
+  agent_ct String @default("")
+  agent_t  String @default("")
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+}
+
+model PlayerMusic {
+  id        Int      @id @default(autoincrement())
+  steamid   String
+  music_id  Int
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@index([steamid])
+}
+
+model WeeklyStat {
+  id         Int      @id @default(autoincrement())
+  steamid    String
+  kills      Int      @default(0)
+  deaths     Int      @default(0)
+  playtime   Int      @default(0)
+  wins       Int      @default(0)
+  losses     Int      @default(0)
+  week_start DateTime @default(now())
+  week_end   DateTime
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@index([steamid])
+  @@index([week_start])
+}
+
+model DailyPlayer {
+  id        Int      @id @default(autoincrement())
+  steamid   String   @unique
+  date      DateTime @default(now())
+  reason    String   @default("Daily selection")
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@index([date])
+}
+
+model Complaint {
+  id        Int      @id @default(autoincrement())
+  steamid   String
+  title     String
+  message   String   @db.Text
+  status    String   @default("open")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@index([steamid])
+  @@index([status])
+}
+
+model Appeal {
+  id        Int      @id @default(autoincrement())
+  steamid   String
+  type      String
+  reason    String   @db.Text
+  message   String   @db.Text
+  status    String   @default("pending")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@index([steamid])
+  @@index([status])
+}
+
+model AdminLog {
+  id        Int      @id @default(autoincrement())
+  steamid   String
+  action    String   @db.Text
+  target    String?
+  details   String?  @db.Text
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@index([steamid])
+  @@index([created_at])
+}
+
+model Report {
+  id        Int      @id @default(autoincrement())
+  steamid   String
+  target    String
+  reason    String   @db.Text
+  status    String   @default("open")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
+
+  @@index([steamid])
+  @@index([status])
+}
