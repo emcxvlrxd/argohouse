@@ -110,11 +110,8 @@ export async function POST(req: NextRequest) {
         } = data;
 
         const fixedKnife =
-          parseInt(
-            String(knife)
-              .replace(/,/g, "")
-              .trim()
-          ) || 500;
+          String(knife || "weapon_knife")
+            .trim();
 
         const fixedTeam =
           parseInt(
