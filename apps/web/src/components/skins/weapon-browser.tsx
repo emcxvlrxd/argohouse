@@ -201,7 +201,7 @@ export function WeaponBrowser() {
         payload = {
           type: "knife",
           data: {
-            knife: skin.weapon_name,
+            knife: Number(defindex),
             team: 2,
           },
         };

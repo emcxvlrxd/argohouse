@@ -4,26 +4,32 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+
   try {
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
+
       return NextResponse.json(
         { error: "Unauthorized" },
         { status: 401 }
       );
+
     }
 
     const steamid = (session.user as any).steamid;
+
     const body = await req.json();
 
     const { type, data } = body;
 
     switch (type) {
 
-      // =========================
+      // =====================================
       // WEAPON SKINS
-      // =========================
+      // =====================================
+
       case "skin": {
 
         const {
@@ -49,10 +55,10 @@ export async function POST(req: NextRequest) {
           (
             ${steamid},
             ${weapon},
-            ${team || 2},
-            ${paintId},
-            ${wear || 0.000001},
-            ${seed || 0},
+            ${Number(team) || 2},
+            ${Number(paintId)},
+            ${Number(wear) || 0.000001},
+            ${Number(seed) || 0},
             0
           )
           ON DUPLICATE KEY UPDATE
@@ -62,11 +68,13 @@ export async function POST(req: NextRequest) {
         `;
 
         break;
+
       }
 
-      // =========================
+      // =====================================
       // KNIFE
-      // =========================
+      // =====================================
+
       case "knife": {
 
         const {
@@ -84,19 +92,21 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             ${steamid},
-            ${knife || "weapon_knife"},
-            ${team || 2}
+            ${Number(knife) || 500},
+            ${Number(team) || 2}
           )
           ON DUPLICATE KEY UPDATE
             knife = VALUES(knife)
         `;
 
         break;
+
       }
 
-      // =========================
+      // =====================================
       // GLOVES
-      // =========================
+      // =====================================
+
       case "gloves": {
 
         const {
@@ -114,19 +124,21 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             ${steamid},
-            ${defindex},
-            ${team || 2}
+            ${Number(defindex)},
+            ${Number(team) || 2}
           )
           ON DUPLICATE KEY UPDATE
             weapon_defindex = VALUES(weapon_defindex)
         `;
 
         break;
+
       }
 
-      // =========================
+      // =====================================
       // MUSIC KIT
-      // =========================
+      // =====================================
+
       case "music": {
 
         const {
@@ -144,19 +156,21 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             ${steamid},
-            ${musicId},
-            ${team || 2}
+            ${Number(musicId)},
+            ${Number(team) || 2}
           )
           ON DUPLICATE KEY UPDATE
             music_id = VALUES(music_id)
         `;
 
         break;
+
       }
 
-      // =========================
+      // =====================================
       // PINS
-      // =========================
+      // =====================================
+
       case "pin": {
 
         const {
@@ -174,38 +188,50 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             ${steamid},
-            ${pin},
-            ${team || 2}
+            ${Number(pin)},
+            ${Number(team) || 2}
           )
           ON DUPLICATE KEY UPDATE
             pin = VALUES(pin)
         `;
 
         break;
+
       }
 
       default:
+
         return NextResponse.json(
           { error: "Invalid type" },
           { status: 400 }
         );
+
     }
 
-    // =========================
+    // =====================================
     // ADMIN LOG
-    // =========================
+    // =====================================
 
     await prisma.adminLog.create({
+
       data: {
+
         steamid,
+
         action: `Equipped ${type}`,
+
         details: JSON.stringify(data),
+
       },
+
     });
 
     return NextResponse.json({
+
       success: true,
+
       message: `${type} equipped successfully`,
+
     });
 
   } catch (error) {
@@ -219,5 +245,7 @@ export async function POST(req: NextRequest) {
       },
       { status: 500 }
     );
+
   }
+
 }
