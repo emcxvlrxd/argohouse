@@ -1,15 +1,6 @@
-import { NextAuthOptions, Profile } from "next-auth";
+import { NextAuthOptions } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
-
-interface SteamProfile extends Record<string, unknown> {
-  steamid: string;
-  steamid64: string;
-  username: string;
-  avatar: string;
-  avatarfull: string;
-  role: string;
-}
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma) as NextAuthOptions["adapter"],
@@ -35,7 +26,7 @@ export const authOptions: NextAuthOptions = {
         params: { "openid.mode": "check_authentication" },
       },
       userinfo: {
-        async request({ tokens }): Promise<Profile> {
+        async request({ tokens }: any): Promise<any> {
           const params = new URLSearchParams(tokens.id_token || "");
           const claimedId = params.get("openid.claimed_id") || "";
           const steamId = claimedId.match(/\/id\/(\d+)$/)?.[1];
@@ -50,7 +41,7 @@ export const authOptions: NextAuthOptions = {
 
           const sid = `STEAM_0:${parseInt(steamId) % 2}:${Math.floor(parseInt(steamId) / 2)}`;
 
-          const profile: SteamProfile = {
+          return {
             sub: steamId,
             id: steamId,
             steamid: sid,
@@ -60,10 +51,9 @@ export const authOptions: NextAuthOptions = {
             avatarfull: player.avatarfull,
             role: "user",
           };
-          return profile;
         },
       },
-      profile(profile: SteamProfile) {
+      profile(profile: any) {
         return {
           id: profile.steamid,
           steamid: profile.steamid,
