@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -98,7 +98,7 @@ export function Navbar({ onMenuClick }: NavbarProps) {
             </DropdownMenu>
           ) : (
             <Button
-              onClick={() => signIn("steam")}
+              onClick={() => window.location.href = "/api/auth/steam"}
               className="bg-gradient-to-r from-[#171a21] to-[#2a475e] hover:from-[#1b1f27] hover:to-[#2f526c] text-white shadow-lg"
             >
               <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24" fill="currentColor">
