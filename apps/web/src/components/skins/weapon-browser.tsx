@@ -523,10 +523,53 @@ export function WeaponBrowser() {
           )}
         </div>
 
-        <CategoryNav
-          active={activeCategory}
-          onSelect={setActiveCategory}
-        />
+        <div className="flex flex-col gap-2">
+          <CategoryNav
+            active={activeCategory}
+            onSelect={setActiveCategory}
+          />
+
+          {(activeCategory === "knives" ||
+            weaponTypes.length > 0) && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() =>
+                    setSubFilter(null)
+                  }
+                  className={cn(
+                    "px-3 py-1 rounded-lg text-xs border transition-all",
+                    subFilter === null
+                      ? "bg-purple-500/20 border-purple-400 text-white"
+                      : "border-white/10 text-muted-foreground hover:bg-white/5"
+                  )}
+                >
+                  All
+                </button>
+
+                {currentSubOptions.map(
+                  (option) => (
+                    <button
+                      key={option.defindex}
+                      onClick={() =>
+                        setSubFilter(
+                          option.defindex
+                        )
+                      }
+                      className={cn(
+                        "px-3 py-1 rounded-lg text-xs border transition-all",
+                        subFilter ===
+                          option.defindex
+                          ? "bg-purple-500/20 border-purple-400 text-white"
+                          : "border-white/10 text-muted-foreground hover:bg-white/5"
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  )
+                )}
+              </div>
+            )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0">
