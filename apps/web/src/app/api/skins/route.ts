@@ -126,14 +126,51 @@ export async function GET(req: NextRequest) {
 
     if (type === "equipped") {
       const targetSteamid = req.nextUrl.searchParams.get("steamid") || steamid;
-      const [skins, knife, gloves, agents, music] = await Promise.all([
-        prisma.playerSkin.findMany({ where: { steamid: targetSteamid } }),
-        prisma.playerKnife.findMany({ where: { steamid: targetSteamid } }),
-        prisma.playerGlove.findMany({ where: { steamid: targetSteamid } }),
-        prisma.playerAgent.findUnique({ where: { steamid: targetSteamid } }),
+      const [dbSkins, dbKnife, dbGloves, dbMusic] = await Promise.all([
+        prisma.wpSkin.findMany({ where: { steamid: targetSteamid } }),
+        prisma.wpKnife.findMany({ where: { steamid: targetSteamid } }),
+        prisma.wpGlove.findMany({ where: { steamid: targetSteamid } }),
         prisma.playerMusic.findMany({ where: { steamid: targetSteamid } }),
       ]);
-      return NextResponse.json({ skins, knife, gloves, agents, music });
+
+      const allSkins = loadJson("skins").map(normalizeSkin);
+      const allGloves = loadJson("gloves").map((g: any) => ({
+        ...g,
+        paint_id: Number(g.paint) || 0,
+        paint_name: g.paint_name || g.name || "Unknown Gloves",
+      }));
+      const allKnives = allSkins.filter((s: any) => s.weapon_defindex >= 500);
+      const allWeapons = allSkins.filter((s: any) => s.weapon_defindex < 500);
+
+      const enrichedSkins = await Promise.all(dbSkins.map(async (s) => {
+        const match = allWeapons.find((x: any) => x.weapon_name === s.weapon && x.paint_id === s.paint);
+        const defindex = match?.weapon_defindex || 0;
+        const cdn = await getCdnImage(defindex, s.paint);
+        return { ...s, weapon_defindex: defindex, weapon_paint_id: s.paint, paint_name: match?.paint_name || "Unknown", image: match?.image || "", cdnImage: cdn, weapon_name: match?.weapon_name || s.weapon };
+      }));
+
+      const enrichedKnife = await Promise.all(dbKnife.map(async (k) => {
+        const match = allKnives.find((x: any) => x.weapon_name === k.knife);
+        const defindex = match?.weapon_defindex || 0;
+        const paintId = k.paint || match?.paint_id || 0;
+        const cdn = await getCdnImage(defindex, paintId);
+        return { ...k, weapon_defindex: defindex, weapon_paint_id: paintId, paint_name: match?.paint_name || "Default Knife", image: match?.image || "", cdnImage: cdn };
+      }));
+
+      const enrichedGloves = await Promise.all(dbGloves.map(async (g) => {
+        const match = allGloves.find((x: any) => x.weapon_defindex === g.weapon_defindex);
+        const paintId = match?.paint_id || 0;
+        const cdn = await getCdnImage(g.weapon_defindex, paintId);
+        return { ...g, weapon_paint_id: paintId, paint_name: match?.paint_name || "Default Gloves", image: match?.image || "", cdnImage: cdn, weapon_name: g.gloves || "" };
+      }));
+
+      return NextResponse.json({
+        skins: enrichedSkins,
+        knife: enrichedKnife,
+        gloves: enrichedGloves,
+        agents: null,
+        music: dbMusic,
+      });
     }
 
     const defindexes = WEAPON_CATEGORIES[type];

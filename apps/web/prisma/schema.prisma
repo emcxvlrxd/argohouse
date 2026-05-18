@@ -216,3 +216,47 @@ model Report {
   @@index([steamid])
   @@index([status])
 }
+
+// ===== WeaponPaints Plugin Tables (read/written by CS2 server) =====
+
+model WpSkin {
+  id         Int    @id @default(autoincrement())
+  steamid    String?
+  weapon     String
+  weapon_team Int
+  paint      Int
+  wear       Float
+  seed       Int
+  stattrak   Int
+
+  @@map("wp_player_skins")
+}
+
+model WpKnife {
+  steamid     String @id
+  knife       String?
+  weapon_team Int
+  paint       Int    @default(0)
+  wear        Float  @default(0.0)
+  seed        Int    @default(0)
+  stattrak    Int    @default(0)
+
+  @@map("wp_player_knife")
+}
+
+model WpGlove {
+  steamid         String @id
+  gloves          String?
+  weapon_defindex Int
+  weapon_team     Int    @default(2)
+
+  @@map("wp_player_gloves")
+}
+
+model WpAgent {
+  steamid  String @id
+  agent_ct String
+  agent_t  String
+
+  @@map("wp_player_agents")
+}

@@ -7,6 +7,7 @@ import { CategoryNav } from "./category-nav";
 import { SkinCard } from "./skin-card";
 import { SkinItem, PlayerEquipment } from "@/types";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import {
   Search,
   Loader2,
@@ -225,6 +226,9 @@ export function WeaponBrowser() {
           type: "knife",
           data: {
             knife: KNIFE_MAP[defindex] || "weapon_knife",
+            paintId: Number(paintId),
+            seed: Number(seed),
+            wear: Number(wear),
             team: 2,
           },
         };
@@ -375,78 +379,60 @@ export function WeaponBrowser() {
 
           </div>
 
-          {currentSubOptions.length > 1 && (
-
+          {activeCategory === "agents" ? (
+            <div className="flex gap-1">
+              {[
+                { label: "Tümü", value: null },
+                { label: "T Terrorist", value: 2 },
+                { label: "CT Counter-Terrorist", value: 3 },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => setSubFilter(opt.value)}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg text-xs border transition-colors whitespace-nowrap",
+                    subFilter === opt.value
+                      ? "border-purple-500/40 bg-purple-500/10 text-purple-300"
+                      : "border-white/10 hover:bg-white/5 text-muted-foreground"
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          ) : currentSubOptions.length > 1 && (
             <div className="relative">
-
               <button
-                onClick={() =>
-                  setSubMenuOpen(!subMenuOpen)
-                }
+                onClick={() => setSubMenuOpen(!subMenuOpen)}
                 className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border border-white/10 hover:bg-white/5 transition-colors whitespace-nowrap"
               >
-
                 {subFilter
-                  ? currentSubOptions.find(
-                    (o) =>
-                      o.defindex === subFilter
-                  )?.label || "Tümü"
-                  : activeCategory === "knives"
-                    ? "Tüm Bıçaklar"
-                    : activeCategory === "gloves"
-                      ? "Tüm Eldivenler"
-                      : "Tüm Silahlar"}
-
+                  ? currentSubOptions.find((o) => o.defindex === subFilter)?.label || "Tümü"
+                  : activeCategory === "knives" ? "Tüm Bıçaklar" : activeCategory === "gloves" ? "Tüm Eldivenler" : "Tüm Silahlar"}
                 <ChevronDown className="w-3 h-3" />
-
               </button>
-
               {subMenuOpen && (
                 <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() =>
-                      setSubMenuOpen(false)
-                    }
-                  />
-
+                  <div className="fixed inset-0 z-10" onClick={() => setSubMenuOpen(false)} />
                   <div className="absolute top-full left-0 mt-1 z-20 w-44 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-black/90 backdrop-blur-xl p-1">
-
                     <button
-                      onClick={() => {
-                        setSubFilter(null);
-                        setSubMenuOpen(false);
-                      }}
+                      onClick={() => { setSubFilter(null); setSubMenuOpen(false); }}
                       className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/5 transition-colors"
                     >
-
-                      {activeCategory === "knives"
-                        ? "Tüm Bıçaklar"
-                        : activeCategory === "gloves"
-                          ? "Tüm Eldivenler"
-                          : "Tümü"}
-
+                      {activeCategory === "knives" ? "Tüm Bıçaklar" : activeCategory === "gloves" ? "Tüm Eldivenler" : "Tümü"}
                     </button>
-
                     {currentSubOptions.map((opt) => (
-
                       <button
                         key={opt.defindex}
-                        onClick={() => {
-                          setSubFilter(opt.defindex);
-                          setSubMenuOpen(false);
-                        }}
+                        onClick={() => { setSubFilter(opt.defindex); setSubMenuOpen(false); }}
                         className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/5 transition-colors"
                       >
                         {opt.label}
                       </button>
-
                     ))}
-
                   </div>
                 </>
               )}
-
             </div>
           )}
 
