@@ -208,9 +208,6 @@ export async function POST(
             "weapon_knife"
           ).trim();
 
-        // IMPORTANT:
-        // DELETE OLD ROWS FIRST
-
         await prisma.$executeRaw`
           DELETE FROM wp_player_knife
           WHERE steamid = ${steamid}
@@ -260,8 +257,13 @@ export async function POST(
 
       case "gloves": {
 
-        // IMPORTANT:
-        // DELETE OLD ROWS FIRST
+        // DÜZELTME: data.gloves'dan oku (frontend bu alanı gönderiyor)
+        // data.paintId değil — o alan gloves için gönderilmiyor, her zaman 0 oluyordu
+        const glovePaintId = toNum(data?.gloves);
+        const gloveDefindex = toNum(data?.defindex);
+
+        console.log("[GLOVES] raw data:", data);
+        console.log("[GLOVES] glovePaintId:", glovePaintId, "gloveDefindex:", gloveDefindex);
 
         await prisma.$executeRaw`
           DELETE FROM wp_player_gloves
@@ -279,8 +281,8 @@ export async function POST(
             )
             VALUES (
               ${steamid},
-              ${paintId},
-              ${defindex},
+              ${glovePaintId},
+              ${gloveDefindex},
               ${team}
             )
           `;
