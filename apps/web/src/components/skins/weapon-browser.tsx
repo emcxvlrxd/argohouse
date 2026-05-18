@@ -115,9 +115,11 @@ export function WeaponBrowser() {
   const [favorites, setFavorites] = useState<Set<number>>(loadFavorites);
   const [showFavorites, setShowFavorites] = useState(false);
 
+  // Agent için CT/T seçimi — 3 = CT, 2 = T
+  const [agentTeam, setAgentTeam] = useState<2 | 3>(3);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Dropdown dışına tıklayınca kapat
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -223,11 +225,12 @@ export function WeaponBrowser() {
           },
         };
       } else if (activeCategory === "agents") {
+        // agentTeam state'inden alıyoruz — skin.team'e güvenmiyoruz
         payload = {
           type: "agent",
           data: {
             model: (skin as any).model || "",
-            team: Number((skin as any).team) || 2,
+            team: agentTeam,
           },
         };
       } else if (activeCategory === "music") {
@@ -294,7 +297,7 @@ export function WeaponBrowser() {
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 pt-1 pb-2">
 
-        {/* Üst satır: arama + favori + mesaj */}
+        {/* Üst satır: arama + favori + agent CT/T toggle + mesaj */}
         <div className="flex items-center gap-2 mb-2">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
@@ -317,6 +320,34 @@ export function WeaponBrowser() {
           >
             <Heart className="w-4 h-4" />
           </button>
+
+          {/* Agent kategorisindeyken CT/T toggle göster */}
+          {activeCategory === "agents" && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setAgentTeam(3)}
+                className={cn(
+                  "px-2.5 h-7 rounded-md text-xs border font-medium transition-colors",
+                  agentTeam === 3
+                    ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
+                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                CT
+              </button>
+              <button
+                onClick={() => setAgentTeam(2)}
+                className={cn(
+                  "px-2.5 h-7 rounded-md text-xs border font-medium transition-colors",
+                  agentTeam === 2
+                    ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-400"
+                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                T
+              </button>
+            </div>
+          )}
 
           {equipMsg && (
             <span className="flex items-center gap-1 text-xs text-green-400">
@@ -379,7 +410,6 @@ export function WeaponBrowser() {
                     transition={{ duration: 0.12 }}
                     className="absolute right-0 top-full mt-1 z-50 min-w-[160px] max-h-64 overflow-y-auto rounded-lg border border-border bg-background shadow-xl"
                   >
-                    {/* Tümü seçeneği */}
                     <button
                       onClick={() => {
                         setSubFilter(null);
