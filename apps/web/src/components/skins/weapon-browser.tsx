@@ -14,23 +14,36 @@ import {
   X,
   CheckCircle,
   ChevronDown,
+  Heart,
 } from "lucide-react";
+
 import { t } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { WEAPON_DISPLAY_NAMES } from "@/lib/weapon-categories";
-import { Heart } from "lucide-react";
 
 const FAVORITES_KEY = "fena_fav_skins";
+
+function sanitizeDefindex(value: any): number {
+  return parseInt(
+    String(value ?? "0").replace(/,/g, "").trim(),
+    10
+  ) || 0;
+}
 
 function loadFavorites(): Set<number> {
   try {
     const raw = localStorage.getItem(FAVORITES_KEY);
     return new Set(raw ? JSON.parse(raw) : []);
-  } catch { return new Set(); }
+  } catch {
+    return new Set();
+  }
 }
 
 function saveFavorites(favs: Set<number>) {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favs]));
+  localStorage.setItem(
+    FAVORITES_KEY,
+    JSON.stringify([...favs])
+  );
 }
 
 const SUB_CATEGORIES: Record<string, number[]> = {
@@ -69,21 +82,28 @@ export function WeaponBrowser() {
 
   const { data: session } = useSession();
 
-  const [activeCategory, setActiveCategory] = useState("knives");
+  const [activeCategory, setActiveCategory] =
+    useState("knives");
+
   const [search, setSearch] = useState("");
 
-  const [skins, setSkins] = useState<SkinItem[]>([]);
+  const [skins, setSkins] =
+    useState<SkinItem[]>([]);
+
   const [equipment, setEquipment] =
     useState<PlayerEquipment | null>(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
   const [selectedId, setSelectedId] =
     useState<number | null>(null);
 
-  const [equipping, setEquipping] = useState(false);
+  const [equipping, setEquipping] =
+    useState(false);
 
-  const [equipMsg, setEquipMsg] = useState("");
+  const [equipMsg, setEquipMsg] =
+    useState("");
 
   const [subFilter, setSubFilter] =
     useState<number | null>(null);
@@ -91,58 +111,78 @@ export function WeaponBrowser() {
   const [subMenuOpen, setSubMenuOpen] =
     useState(false);
 
-  const [favorites, setFavorites] = useState<Set<number>>(loadFavorites);
-  const [showFavorites, setShowFavorites] = useState(false);
+  const [favorites, setFavorites] =
+    useState<Set<number>>(loadFavorites);
 
-  const toggleFavorite = useCallback((id: number | undefined) => {
-    if (id == null) return;
-    setFavorites((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      saveFavorites(next);
-      return next;
-    });
-  }, []);
+  const [showFavorites, setShowFavorites] =
+    useState(false);
 
-  // =========================================
+  const toggleFavorite = useCallback(
+    (id: number | undefined) => {
+
+      if (id == null) return;
+
+      setFavorites((prev) => {
+
+        const next = new Set(prev);
+
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+
+        saveFavorites(next);
+
+        return next;
+      });
+
+    },
+    []
+  );
+
+  // =====================================
   // FETCH SKINS
-  // =========================================
+  // =====================================
 
-  const fetchSkins = useCallback(async (category: string) => {
+  const fetchSkins = useCallback(
+    async (category: string) => {
 
-    setLoading(true);
-    setSelectedId(null);
-    setSubFilter(null);
+      setLoading(true);
+      setSelectedId(null);
+      setSubFilter(null);
 
-    try {
+      try {
 
-      const res = await fetch(
-        `/api/skins?type=${category}`
-      );
+        const res = await fetch(
+          `/api/skins?type=${category}`
+        );
 
-      const data = await res.json();
+        const data = await res.json();
 
-      setSkins(data.skins || []);
+        setSkins(data.skins || []);
 
-    } catch {
+      } catch {
 
-      setSkins([]);
+        setSkins([]);
 
-    } finally {
+      } finally {
 
-      setLoading(false);
+        setLoading(false);
 
-    }
+      }
 
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     fetchSkins(activeCategory);
   }, [activeCategory, fetchSkins]);
 
-  // =========================================
+  // =====================================
   // FETCH EQUIPMENT
-  // =========================================
+  // =====================================
 
   useEffect(() => {
 
@@ -166,9 +206,9 @@ export function WeaponBrowser() {
 
   }, []);
 
-  // =========================================
+  // =====================================
   // WEAPON TYPES
-  // =========================================
+  // =====================================
 
   const weaponTypes = useMemo(() => {
 
@@ -199,9 +239,9 @@ export function WeaponBrowser() {
 
   }, [skins]);
 
-  // =========================================
+  // =====================================
   // EQUIP
-  // =========================================
+  // =====================================
 
   const handleEquip = async (
     paintId: number,
@@ -220,11 +260,14 @@ export function WeaponBrowser() {
 
       let payload;
 
-      // =====================================
+      // =================================
       // KNIVES
-      // =====================================
+      // =================================
 
       if (activeCategory === "knives") {
+
+        const cleanDefindex =
+          sanitizeDefindex(defindex);
 
         const KNIFE_MAP: Record<number, string> = {
           500: "weapon_bayonet",
@@ -252,96 +295,130 @@ export function WeaponBrowser() {
         payload = {
           type: "knife",
           data: {
-            knife: KNIFE_MAP[defindex] || "weapon_knife",
-            defindex: Number(defindex),
-            paintId: Number(paintId),
-            seed: Number(seed),
-            wear: Number(wear),
+            knife:
+              KNIFE_MAP[cleanDefindex] ||
+              "weapon_knife",
+
+            defindex: cleanDefindex,
+
+            paintId: Number(paintId) || 0,
+
+            seed: Number(seed) || 0,
+
+            wear:
+              Number(wear) || 0.000001,
+
             team: 2,
           },
         };
 
       }
-      // =====================================
+
+      // =================================
       // AGENTS
-      // =====================================
+      // =================================
 
       else if (activeCategory === "agents") {
 
         payload = {
           type: "agent",
           data: {
-            model: (skin as any).model || "",
-            team: (skin as any).team || 2,
-            paintId: Number(paintId),
+            model:
+              (skin as any).model || "",
+
+            team:
+              (skin as any).team || 2,
+
+            paintId:
+              Number(paintId) || 0,
           },
         };
 
       }
 
-      // =====================================
-      // MUSIC KITS
-      // =====================================
+      // =================================
+      // MUSIC
+      // =================================
 
       else if (activeCategory === "music") {
 
         payload = {
           type: "music",
           data: {
-            paintId: Number(paintId),
+            paintId:
+              Number(paintId) || 0,
           },
         };
 
       }
 
-      // =====================================
+      // =================================
       // PINS
-      // =====================================
+      // =================================
 
       else if (activeCategory === "pins") {
 
         payload = {
           type: "pin",
           data: {
-            paintId: Number(paintId),
+            paintId:
+              Number(paintId) || 0,
           },
         };
 
       }
 
-      // =====================================
+      // =================================
       // GLOVES
-      // =====================================
+      // =================================
 
       else if (activeCategory === "gloves") {
 
         payload = {
           type: "gloves",
           data: {
-            defindex: Number(defindex),
-            paintId: Number(paintId),
-            seed: Number(seed),
-            wear: Number(wear),
+            defindex:
+              sanitizeDefindex(defindex),
+
+            paintId:
+              Number(paintId) || 0,
+
+            seed:
+              Number(seed) || 0,
+
+            wear:
+              Number(wear) || 0.000001,
+
             team: 2,
           },
         };
 
       }
 
-      // =====================================
-      // NORMAL WEAPON SKINS
-      // =====================================
+      // =================================
+      // NORMAL SKINS
+      // =================================
 
       else {
 
         payload = {
           type: "skin",
           data: {
-            weapon: skin.weapon_name,
-            defindex: Number(defindex),
-            paintId: Number(paintId),
-            seed: Number(seed),
-            wear: Number(wear),
+            weapon:
+              skin.weapon_name,
+
+            defindex:
+              sanitizeDefindex(defindex),
+
+            paintId:
+              Number(paintId) || 0,
+
+            seed:
+              Number(seed) || 0,
+
+            wear:
+              Number(wear) || 0.000001,
+
             team: 2,
           },
         };
@@ -353,7 +430,8 @@ export function WeaponBrowser() {
         {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":
+              "application/json",
           },
           body: JSON.stringify(payload),
         }
@@ -373,7 +451,10 @@ export function WeaponBrowser() {
 
         setEquipMsg(
           "Hata: " +
-          (result.message || "Bilinmeyen hata")
+          (
+            result.message ||
+            "Bilinmeyen hata"
+          )
         );
 
       }
@@ -390,29 +471,35 @@ export function WeaponBrowser() {
 
   };
 
-  // =========================================
+  // =====================================
   // FILTERS
-  // =========================================
+  // =====================================
 
   const filteredBySub = useMemo(() => {
 
     if (!subFilter) return skins;
 
     return skins.filter(
-      (s) => s.weapon_defindex === subFilter
+      (s) =>
+        s.weapon_defindex === subFilter
     );
 
   }, [skins, subFilter]);
 
-  const filteredSkins = filteredBySub
-    .filter((s) =>
-      !showFavorites || favorites.has(s.id ?? -1)
-    )
-    .filter((s) =>
-      (s.paint_name || "")
-        .toLowerCase()
-        .includes(search.toLowerCase())
-    );
+  const filteredSkins =
+    filteredBySub
+      .filter(
+        (s) =>
+          !showFavorites ||
+          favorites.has(s.id ?? -1)
+      )
+      .filter((s) =>
+        (s.paint_name || "")
+          .toLowerCase()
+          .includes(
+            search.toLowerCase()
+          )
+      );
 
   const currentSubOptions =
     activeCategory === "knives"
@@ -426,10 +513,6 @@ export function WeaponBrowser() {
         defindex: d,
         label: l,
       }));
-
-  // =========================================
-  // RENDER
-  // =========================================
 
   return (
     <div className="flex flex-col h-full">
@@ -461,76 +544,6 @@ export function WeaponBrowser() {
             )}
 
           </div>
-
-          {activeCategory === "agents" ? (
-            <div className="flex gap-1">
-              {[
-                { label: "Tümü", value: null },
-                { label: "T Terrorist", value: 2 },
-                { label: "CT Counter-Terrorist", value: 3 },
-              ].map((opt) => (
-                <button
-                  key={opt.label}
-                  onClick={() => setSubFilter(opt.value)}
-                  className={cn(
-                    "px-2.5 py-1.5 rounded-lg text-xs border transition-colors whitespace-nowrap",
-                    subFilter === opt.value
-                      ? "border-purple-500/40 bg-purple-500/10 text-purple-300"
-                      : "border-white/10 hover:bg-white/5 text-muted-foreground"
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          ) : currentSubOptions.length > 1 && (
-            <div className="relative">
-              <button
-                onClick={() => setSubMenuOpen(!subMenuOpen)}
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border border-white/10 hover:bg-white/5 transition-colors whitespace-nowrap"
-              >
-                {subFilter
-                  ? currentSubOptions.find((o) => o.defindex === subFilter)?.label || "Tümü"
-                  : activeCategory === "knives" ? "Tüm Bıçaklar" : activeCategory === "gloves" ? "Tüm Eldivenler" : "Tüm Silahlar"}
-                <ChevronDown className="w-3 h-3" />
-              </button>
-              {subMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setSubMenuOpen(false)} />
-                  <div className="absolute top-full left-0 mt-1 z-20 w-44 max-h-60 overflow-y-auto rounded-xl border border-white/10 bg-black/90 backdrop-blur-xl p-1">
-                    <button
-                      onClick={() => { setSubFilter(null); setSubMenuOpen(false); }}
-                      className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/5 transition-colors"
-                    >
-                      {activeCategory === "knives" ? "Tüm Bıçaklar" : activeCategory === "gloves" ? "Tüm Eldivenler" : "Tümü"}
-                    </button>
-                    {currentSubOptions.map((opt) => (
-                      <button
-                        key={opt.defindex}
-                        onClick={() => { setSubFilter(opt.defindex); setSubMenuOpen(false); }}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg text-xs hover:bg-white/5 transition-colors"
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={() => setShowFavorites(!showFavorites)}
-            className={cn(
-              "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-colors whitespace-nowrap",
-              showFavorites
-                ? "border-pink-500/40 bg-pink-500/10 text-pink-300"
-                : "border-white/10 hover:bg-white/5 text-muted-foreground"
-            )}
-          >
-            <Heart className={cn("w-3 h-3", showFavorites && "fill-pink-300")} />
-            Favoriler
-          </button>
 
           {equipMsg && (
             <div className="flex items-center gap-1 text-xs text-emerald-400">
@@ -576,9 +589,17 @@ export function WeaponBrowser() {
 
               <motion.div
                 key={`${skin.paint_id}-${index}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02 }}
+                initial={{
+                  opacity: 0,
+                  y: 20,
+                }}
+                animate={{
+                  opacity: 1,
+                  y: 0,
+                }}
+                transition={{
+                  delay: index * 0.02,
+                }}
               >
 
                 <SkinCard
@@ -589,10 +610,20 @@ export function WeaponBrowser() {
                   weaponDefindex={skin.weapon_defindex}
                   image={skin.image}
                   cdnImage={skin.cdnImage}
-                  selected={selectedId === skin.id}
-                  hideSeedWear={activeCategory === "agents" || activeCategory === "music" || activeCategory === "pins"}
-                  favorite={favorites.has(skin.id ?? -1)}
-                  onToggleFavorite={() => toggleFavorite(skin.id)}
+                  selected={
+                    selectedId === skin.id
+                  }
+                  hideSeedWear={
+                    activeCategory === "agents" ||
+                    activeCategory === "music" ||
+                    activeCategory === "pins"
+                  }
+                  favorite={favorites.has(
+                    skin.id ?? -1
+                  )}
+                  onToggleFavorite={() =>
+                    toggleFavorite(skin.id)
+                  }
                   onSelect={() =>
                     setSelectedId(
                       selectedId === skin.id
