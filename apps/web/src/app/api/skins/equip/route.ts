@@ -25,9 +25,9 @@ export async function POST(req: NextRequest) {
     const { type, data } = body;
 
     // Ensure player has default rows in ALL wp_player_* tables to prevent plugin NullReferenceException
-    await prisma.$executeRaw`INSERT IGNORE INTO wp_player_music (steamid, music, music_id, weapon_team) VALUES (${steamid}, '', 0, 'ALL')`;
+    await prisma.$executeRaw`INSERT IGNORE INTO wp_player_music (steamid, music, music_id, weapon_team) VALUES (${steamid}, '', 0, 2)`;
     await prisma.$executeRaw`INSERT IGNORE INTO wp_player_agents (steamid, agent_ct, agent_t) VALUES (${steamid}, '', '')`;
-    await prisma.$executeRaw`INSERT IGNORE INTO wp_player_pins (steamid, pin, weapon_team) VALUES (${steamid}, 0, 'ALL')`;
+    await prisma.$executeRaw`INSERT IGNORE INTO wp_player_pins (steamid, pin, weapon_team) VALUES (${steamid}, 0, 2)`;
 
     switch (type) {
       case "skin": {
