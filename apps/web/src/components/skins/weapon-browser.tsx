@@ -307,11 +307,19 @@ export function WeaponBrowser() {
       // ================================
 
       else if (activeCategory === "gloves") {
+
         payload = {
           type: "gloves",
           data: {
-            gloves: String(cleanPaint),
-            defindex: cleanDefindex,
+            gloves: String(
+              skin.paint_id ??
+              cleanPaint
+            ),
+
+            defindex:
+              cleanDefindex,
+
+            team: 2,
           },
         };
       }
