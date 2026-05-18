@@ -4,13 +4,30 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 function toNum(v: any, fallback = 0): number {
-  const n = parseInt(String(v ?? "").replace(/,/g, "").trim());
+  const n = parseInt(
+    String(v ?? "")
+      .replace(/,/g, "")
+      .trim(),
+    10
+  );
+
   return isNaN(n) ? fallback : n;
 }
 
-function toFloat(v: any, fallback = 0.000001): number {
-  const n = parseFloat(String(v ?? "").replace(/,/g, ".").trim());
-  return isNaN(n) ? fallback : n;
+function toFloat(
+  v: any,
+  fallback = 0.000001
+): number {
+
+  const n = parseFloat(
+    String(v ?? "")
+      .replace(/,/g, ".")
+      .trim()
+  );
+
+  return isNaN(n)
+    ? fallback
+    : n;
 }
 
 async function upsertSkin(
@@ -22,6 +39,7 @@ async function upsertSkin(
   seed: number,
   team: number
 ) {
+
   await prisma.$executeRaw`
     INSERT INTO wp_player_skins (
       steamid,
@@ -67,6 +85,7 @@ async function upsertSkin(
       '0;0;0;0;0;0;0',
       '0;0;0;0;0;0;0'
     )
+
     ON DUPLICATE KEY UPDATE
       weapon_defindex = VALUES(weapon_defindex),
       weapon_paint_id = VALUES(weapon_paint_id),
@@ -78,92 +97,127 @@ async function upsertSkin(
   `;
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(
+  req: NextRequest
+) {
+
   try {
-    const session = await getServerSession(authOptions);
+
+    const session =
+      await getServerSession(
+        authOptions
+      );
 
     if (!session?.user) {
+
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
+        {
+          error: "Unauthorized"
+        },
+        {
+          status: 401
+        }
       );
+
     }
 
-    const steamid = (session.user as any).steamid;
+    const steamid =
+      (session.user as any).steamid;
 
-    const body = await req.json();
-    const { type, data } = body;
+    const body =
+      await req.json();
 
-    const paintId = toNum(data?.paintId);
-    const seed = toNum(data?.seed);
-    const wear = toFloat(data?.wear);
-    const defindex = toNum(data?.defindex);
+    const {
+      type,
+      data
+    } = body;
 
-    // Ensure base rows
-    await prisma.$executeRaw`
-      INSERT IGNORE INTO wp_player_music (steamid, music_id, weapon_team)
-      VALUES (${steamid}, 0, 2)
-    `;
+    const paintId =
+      toNum(data?.paintId);
 
-    await prisma.$executeRaw`
-      INSERT IGNORE INTO wp_player_music (steamid, music_id, weapon_team)
-      VALUES (${steamid}, 0, 3)
-    `;
+    const seed =
+      toNum(data?.seed);
 
-    await prisma.$executeRaw`
-      INSERT IGNORE INTO wp_player_agents (steamid, agent_ct, agent_t)
-      VALUES (${steamid}, '', '')
-    `;
+    const wear =
+      toFloat(data?.wear);
 
-    await prisma.$executeRaw`
-      INSERT IGNORE INTO wp_player_pins (steamid, id, weapon_team)
-      VALUES (${steamid}, 0, 2)
-    `;
+    const defindex =
+      toNum(data?.defindex);
+
+    // =========================
+    // BASE ROWS
+    // =========================
 
     await prisma.$executeRaw`
-      INSERT IGNORE INTO wp_player_pins (steamid, id, weapon_team)
-      VALUES (${steamid}, 0, 3)
+      INSERT IGNORE INTO wp_player_agents (
+        steamid,
+        agent_ct,
+        agent_t
+      )
+      VALUES (
+        ${steamid},
+        '',
+        ''
+      )
     `;
+
+    // =========================
+    // SWITCH
+    // =========================
 
     switch (type) {
-      // =========================
-      // WEAPON SKINS
-      // =========================
+
+      // =====================
+      // NORMAL SKINS
+      // =====================
+
       case "skin": {
+
         const weapon =
-          String(data?.weapon || "").trim() || "weapon_ak47";
+          String(
+            data?.weapon ||
+            "weapon_ak47"
+          ).trim();
 
-        await upsertSkin(
-          steamid,
-          weapon,
-          defindex,
-          paintId,
-          wear,
-          seed,
-          2
-        );
+        for (const team of [2, 3]) {
 
-        await upsertSkin(
-          steamid,
-          weapon,
-          defindex,
-          paintId,
-          wear,
-          seed,
-          3
-        );
+          await upsertSkin(
+            steamid,
+            weapon,
+            defindex,
+            paintId,
+            wear,
+            seed,
+            team
+          );
+
+        }
 
         break;
       }
 
-      // =========================
+      // =====================
       // KNIFE
-      // =========================
+      // =====================
+
       case "knife": {
+
         const knife =
-          String(data?.knife || "weapon_knife").trim();
+          String(
+            data?.knife ||
+            "weapon_knife"
+          ).trim();
+
+        // IMPORTANT:
+        // DELETE OLD ROWS FIRST
+
+        await prisma.$executeRaw`
+          DELETE FROM wp_player_knife
+          WHERE steamid = ${steamid}
+        `;
 
         for (const team of [2, 3]) {
+
           await prisma.$executeRaw`
             INSERT INTO wp_player_knife (
               steamid,
@@ -183,43 +237,39 @@ export async function POST(req: NextRequest) {
               ${seed},
               0
             )
-            ON DUPLICATE KEY UPDATE
-              knife = VALUES(knife),
-              paint = VALUES(paint),
-              wear = VALUES(wear),
-              seed = VALUES(seed)
           `;
+
+          await upsertSkin(
+            steamid,
+            knife,
+            defindex,
+            paintId,
+            wear,
+            seed,
+            team
+          );
+
         }
-
-        // IMPORTANT FOR CT/T
-        await upsertSkin(
-          steamid,
-          knife,
-          defindex,
-          paintId,
-          wear,
-          seed,
-          2
-        );
-
-        await upsertSkin(
-          steamid,
-          knife,
-          defindex,
-          paintId,
-          wear,
-          seed,
-          3
-        );
 
         break;
       }
 
-      // =========================
+      // =====================
       // GLOVES
-      // =========================
+      // =====================
+
       case "gloves": {
+
+        // IMPORTANT:
+        // DELETE OLD ROWS FIRST
+
+        await prisma.$executeRaw`
+          DELETE FROM wp_player_gloves
+          WHERE steamid = ${steamid}
+        `;
+
         for (const team of [2, 3]) {
+
           await prisma.$executeRaw`
             INSERT INTO wp_player_gloves (
               steamid,
@@ -233,64 +283,66 @@ export async function POST(req: NextRequest) {
               ${defindex},
               ${team}
             )
-            ON DUPLICATE KEY UPDATE
-              gloves = VALUES(gloves),
-              weapon_defindex = VALUES(weapon_defindex)
           `;
+
         }
 
         break;
       }
 
-      // =========================
+      // =====================
       // AGENTS
-      // =========================
+      // =====================
+
       case "agent": {
-        const model = String(data?.model || "").trim();
-        const team = toNum(data?.team);
+
+        const model =
+          String(
+            data?.model || ""
+          ).trim();
+
+        const team =
+          toNum(data?.team);
 
         if (team === 2) {
+
           await prisma.$executeRaw`
-            INSERT INTO wp_player_agents (
-              steamid,
-              agent_ct,
-              agent_t
-            )
-            VALUES (
-              ${steamid},
-              '',
-              ${model}
-            )
-            ON DUPLICATE KEY UPDATE
-              agent_t = VALUES(agent_t)
+            UPDATE wp_player_agents
+            SET agent_t = ${model}
+            WHERE steamid = ${steamid}
           `;
-        } else if (team === 3) {
+
+        }
+
+        if (team === 3) {
+
           await prisma.$executeRaw`
-            INSERT INTO wp_player_agents (
-              steamid,
-              agent_ct,
-              agent_t
-            )
-            VALUES (
-              ${steamid},
-              ${model},
-              ''
-            )
-            ON DUPLICATE KEY UPDATE
-              agent_ct = VALUES(agent_ct)
+            UPDATE wp_player_agents
+            SET agent_ct = ${model}
+            WHERE steamid = ${steamid}
           `;
+
         }
 
         break;
       }
 
-      // =========================
+      // =====================
       // MUSIC
-      // =========================
+      // =====================
+
       case "music": {
-        const musicId = toNum(data?.paintId);
+
+        const musicId =
+          toNum(data?.paintId);
+
+        await prisma.$executeRaw`
+          DELETE FROM wp_player_music
+          WHERE steamid = ${steamid}
+        `;
 
         for (const team of [2, 3]) {
+
           await prisma.$executeRaw`
             INSERT INTO wp_player_music (
               steamid,
@@ -302,21 +354,29 @@ export async function POST(req: NextRequest) {
               ${musicId},
               ${team}
             )
-            ON DUPLICATE KEY UPDATE
-              music_id = VALUES(music_id)
           `;
+
         }
 
         break;
       }
 
-      // =========================
+      // =====================
       // PINS
-      // =========================
+      // =====================
+
       case "pin": {
-        const pinId = toNum(data?.paintId);
+
+        const pinId =
+          toNum(data?.paintId);
+
+        await prisma.$executeRaw`
+          DELETE FROM wp_player_pins
+          WHERE steamid = ${steamid}
+        `;
 
         for (const team of [2, 3]) {
+
           await prisma.$executeRaw`
             INSERT INTO wp_player_pins (
               steamid,
@@ -328,35 +388,50 @@ export async function POST(req: NextRequest) {
               ${team},
               ${pinId}
             )
-            ON DUPLICATE KEY UPDATE
-              id = VALUES(id)
           `;
+
         }
 
         break;
       }
 
       default:
+
         return NextResponse.json(
-          { error: "Invalid type" },
-          { status: 400 }
+          {
+            error: "Invalid type"
+          },
+          {
+            status: 400
+          }
         );
+
     }
 
     return NextResponse.json({
       success: true,
-      message: `${type} equipped successfully`
+      message:
+        `${type} equipped successfully`
     });
 
   } catch (error) {
-    console.error("EQUIP ERROR:", error);
+
+    console.error(
+      "EQUIP ERROR:",
+      error
+    );
 
     return NextResponse.json(
       {
         success: false,
-        message: "Failed to equip item"
+        message:
+          "Failed to equip item"
       },
-      { status: 500 }
+      {
+        status: 500
+      }
     );
+
   }
+
 }
