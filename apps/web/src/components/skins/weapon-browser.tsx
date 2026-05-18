@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { CategoryNav } from "./category-nav";
 import { SkinCard } from "./skin-card";
 import { SkinItem, PlayerEquipment } from "@/types";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
   Search,
@@ -115,9 +115,21 @@ export function WeaponBrowser() {
   const [favorites, setFavorites] = useState<Set<number>>(loadFavorites);
   const [showFavorites, setShowFavorites] = useState(false);
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Dropdown dışına tıklayınca kapat
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setSubMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const toggleFavorite = useCallback((id?: number) => {
     if (!id) return;
-
     setFavorites((prev) => {
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
@@ -156,21 +168,17 @@ export function WeaponBrowser() {
 
   const weaponTypes = useMemo(() => {
     const map = new Map<number, string>();
-
     skins.forEach((s) => {
       if (s.weapon_defindex && !map.has(s.weapon_defindex)) {
         const label =
           WEAPON_DISPLAY_NAMES[s.weapon_name] ||
           s.weapon_name?.replace("weapon_", "").replace(/_/g, " ");
-
         map.set(s.weapon_defindex, label);
       }
     });
-
     return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
   }, [skins]);
 
-  // 🔥 KRİTİK FIX: gloves artık doğru gönderiliyor
   const handleEquip = async (
     paintId: number,
     defindex: number,
@@ -206,20 +214,15 @@ export function WeaponBrowser() {
             wear: cleanWear,
           },
         };
-      }
-
-      // 🔥 FIXED GLOVES SECTION
-      else if (activeCategory === "gloves") {
+      } else if (activeCategory === "gloves") {
         payload = {
           type: "gloves",
           data: {
-            gloves: String(cleanPaint), // artık asla 0 gitmez
+            gloves: String(cleanPaint),
             defindex: cleanDefindex,
           },
         };
-      }
-
-      else if (activeCategory === "agents") {
+      } else if (activeCategory === "agents") {
         payload = {
           type: "agent",
           data: {
@@ -227,17 +230,11 @@ export function WeaponBrowser() {
             team: Number((skin as any).team) || 2,
           },
         };
-      }
-
-      else if (activeCategory === "music") {
+      } else if (activeCategory === "music") {
         payload = { type: "music", data: { paintId: cleanPaint } };
-      }
-
-      else if (activeCategory === "pins") {
+      } else if (activeCategory === "pins") {
         payload = { type: "pin", data: { paintId: cleanPaint } };
-      }
-
-      else {
+      } else {
         payload = {
           type: "skin",
           data: {
@@ -272,12 +269,8 @@ export function WeaponBrowser() {
   };
 
   const filteredSkins = skins
-    .filter((s) =>
-      !subFilter ? true : s.weapon_defindex === subFilter
-    )
-    .filter((s) =>
-      !showFavorites || favorites.has(s.id ?? -1)
-    )
+    .filter((s) => (!subFilter ? true : s.weapon_defindex === subFilter))
+    .filter((s) => !showFavorites || favorites.has(s.id ?? -1))
     .filter((s) =>
       (s.paint_name || "").toLowerCase().includes(search.toLowerCase())
     );
@@ -293,43 +286,156 @@ export function WeaponBrowser() {
         label: l,
       }));
 
+  const activeSubLabel = subFilter
+    ? currentSubOptions.find((o) => o.defindex === subFilter)?.label
+    : null;
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex-shrink-0 pt-1 pb-2">
+
+        {/* Üst satır: arama + favori + mesaj */}
         <div className="flex items-center gap-2 mb-2">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3" />
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              placeholder="Skin ara..."
               className="pl-8 h-8 text-xs"
             />
           </div>
 
-          <button onClick={() => setShowFavorites(!showFavorites)}>
-            <Heart />
+          <button
+            onClick={() => setShowFavorites(!showFavorites)}
+            className={cn(
+              "p-1.5 rounded-md transition-colors",
+              showFavorites
+                ? "text-red-400 bg-red-400/10"
+                : "text-muted-foreground hover:text-red-400"
+            )}
+          >
+            <Heart className="w-4 h-4" />
           </button>
 
-          {equipMsg && <CheckCircle className="text-green-400" />}
+          {equipMsg && (
+            <span className="flex items-center gap-1 text-xs text-green-400">
+              <CheckCircle className="w-3 h-3" />
+              {equipMsg}
+            </span>
+          )}
         </div>
 
+        {/* Alt satır: kategori nav + filtre dropdown */}
         <div className="flex items-center gap-2">
           <CategoryNav
             active={activeCategory}
-            onSelect={setActiveCategory}
+            onSelect={(cat) => {
+              setActiveCategory(cat);
+              setSubMenuOpen(false);
+            }}
           />
 
-          <button onClick={() => setSubMenuOpen(!subMenuOpen)}>
-            <ChevronDown />
-          </button>
+          {/* Filtre dropdown */}
+          {currentSubOptions.length > 0 && (
+            <div className="relative ml-auto" ref={dropdownRef}>
+              <button
+                onClick={() => setSubMenuOpen((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1.5 px-2.5 h-8 rounded-md border text-xs transition-colors",
+                  subMenuOpen
+                    ? "border-primary/60 bg-primary/10 text-primary"
+                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground hover:border-border/80"
+                )}
+              >
+                <span className="max-w-[120px] truncate">
+                  {activeSubLabel ?? "Filtrele"}
+                </span>
+                {subFilter ? (
+                  <X
+                    className="w-3 h-3 shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSubFilter(null);
+                      setSubMenuOpen(false);
+                    }}
+                  />
+                ) : (
+                  <ChevronDown
+                    className={cn(
+                      "w-3 h-3 shrink-0 transition-transform",
+                      subMenuOpen && "rotate-180"
+                    )}
+                  />
+                )}
+              </button>
+
+              <AnimatePresence>
+                {subMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -4, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -4, scale: 0.97 }}
+                    transition={{ duration: 0.12 }}
+                    className="absolute right-0 top-full mt-1 z-50 min-w-[160px] max-h-64 overflow-y-auto rounded-lg border border-border bg-background shadow-xl"
+                  >
+                    {/* Tümü seçeneği */}
+                    <button
+                      onClick={() => {
+                        setSubFilter(null);
+                        setSubMenuOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-accent",
+                        !subFilter && "text-primary font-medium"
+                      )}
+                    >
+                      Tümü
+                    </button>
+
+                    <div className="h-px bg-border mx-2 mb-1" />
+
+                    {currentSubOptions.map((opt) => (
+                      <button
+                        key={opt.defindex}
+                        onClick={() => {
+                          setSubFilter(opt.defindex);
+                          setSubMenuOpen(false);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-1.5 text-xs transition-colors hover:bg-accent",
+                          subFilter === opt.defindex &&
+                          "text-primary font-medium bg-primary/5"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </div>
 
+      {/* Skin listesi */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <Loader2 className="animate-spin" />
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : filteredSkins.length === 0 ? (
+          <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
+            Sonuç bulunamadı
+          </div>
         ) : (
-          <motion.div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-5 gap-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+          >
             {filteredSkins.map((skin, i) => (
               <SkinCard
                 key={i}
@@ -346,9 +452,7 @@ export function WeaponBrowser() {
                 onSelect={() =>
                   setSelectedId(selectedId === skin.id ? null : skin.id ?? null)
                 }
-                onEquip={(p, d, s, w) =>
-                  handleEquip(p, d, s, w, skin)
-                }
+                onEquip={(p, d, s, w) => handleEquip(p, d, s, w, skin)}
               />
             ))}
           </motion.div>
