@@ -523,7 +523,8 @@ export function WeaponBrowser() {
           )}
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 mt-2">
+
           <CategoryNav
             active={activeCategory}
             onSelect={setActiveCategory}
@@ -531,44 +532,73 @@ export function WeaponBrowser() {
 
           {(activeCategory === "knives" ||
             weaponTypes.length > 0) && (
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+
                 <button
                   onClick={() =>
-                    setSubFilter(null)
+                    setSubMenuOpen(
+                      !subMenuOpen
+                    )
                   }
-                  className={cn(
-                    "px-3 py-1 rounded-lg text-xs border transition-all",
-                    subFilter === null
-                      ? "bg-purple-500/20 border-purple-400 text-white"
-                      : "border-white/10 text-muted-foreground hover:bg-white/5"
-                  )}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs text-white transition-all"
                 >
-                  All
+                  {subFilter
+                    ? currentSubOptions.find(
+                      (x) =>
+                        x.defindex ===
+                        subFilter
+                    )?.label
+                    : "Filter"}
+
+                  <ChevronDown className="w-3.5 h-3.5" />
                 </button>
 
-                {currentSubOptions.map(
-                  (option) => (
+                {subMenuOpen && (
+                  <div className="absolute top-full left-0 mt-2 z-50 min-w-[220px] rounded-xl border border-white/10 bg-[#0f0f14] backdrop-blur-xl shadow-2xl p-2 flex flex-col gap-1">
+
                     <button
-                      key={option.defindex}
-                      onClick={() =>
-                        setSubFilter(
-                          option.defindex
-                        )
-                      }
-                      className={cn(
-                        "px-3 py-1 rounded-lg text-xs border transition-all",
-                        subFilter ===
-                          option.defindex
-                          ? "bg-purple-500/20 border-purple-400 text-white"
-                          : "border-white/10 text-muted-foreground hover:bg-white/5"
-                      )}
+                      onClick={() => {
+                        setSubFilter(null);
+                        setSubMenuOpen(false);
+                      }}
+                      className="text-left px-3 py-2 rounded-lg text-xs hover:bg-white/5 transition"
                     >
-                      {option.label}
+                      All
                     </button>
-                  )
+
+                    {currentSubOptions.map(
+                      (option) => (
+                        <button
+                          key={
+                            option.defindex
+                          }
+                          onClick={() => {
+                            setSubFilter(
+                              option.defindex
+                            );
+
+                            setSubMenuOpen(
+                              false
+                            );
+                          }}
+                          className={cn(
+                            "text-left px-3 py-2 rounded-lg text-xs transition",
+                            subFilter ===
+                              option.defindex
+                              ? "bg-purple-500/20 text-white"
+                              : "hover:bg-white/5 text-muted-foreground"
+                          )}
+                        >
+                          {option.label}
+                        </button>
+                      )
+                    )}
+                  </div>
                 )}
+
               </div>
             )}
+
         </div>
       </div>
 
