@@ -68,6 +68,10 @@ export async function POST(req: NextRequest) {
               .trim()
           ) || 0.000001;
 
+        const fixedWeapon =
+          String(weapon || "")
+            .trim();
+
         await prisma.$executeRawUnsafe(`
           INSERT INTO wp_player_skins
           (
@@ -82,7 +86,7 @@ export async function POST(req: NextRequest) {
           VALUES
           (
             '${steamid}',
-            '${String(weapon || "").replace("weapon_", "")}',
+            '${fixedWeapon}',
             ${fixedTeam},
             ${fixedPaint},
             ${fixedWear},
@@ -106,12 +110,29 @@ export async function POST(req: NextRequest) {
 
         const {
           knife,
+          paintId,
+          wear,
+          seed,
           team
         } = data;
 
         const fixedKnife =
           String(knife || "weapon_knife")
             .trim();
+
+        const fixedPaint =
+          parseInt(
+            String(paintId)
+              .replace(/,/g, "")
+              .trim()
+          ) || 0;
+
+        const fixedSeed =
+          parseInt(
+            String(seed)
+              .replace(/,/g, "")
+              .trim()
+          ) || 0;
 
         const fixedTeam =
           parseInt(
@@ -120,21 +141,39 @@ export async function POST(req: NextRequest) {
               .trim()
           ) || 2;
 
+        const fixedWear =
+          parseFloat(
+            String(wear)
+              .replace(/,/g, ".")
+              .trim()
+          ) || 0.000001;
+
         await prisma.$executeRawUnsafe(`
           INSERT INTO wp_player_knife
           (
             steamid,
             knife,
-            weapon_team
+            weapon_team,
+            paint,
+            wear,
+            seed,
+            stattrak
           )
           VALUES
           (
             '${steamid}',
             '${fixedKnife}',
-            ${fixedTeam}
+            ${fixedTeam},
+            ${fixedPaint},
+            ${fixedWear},
+            ${fixedSeed},
+            0
           )
           ON DUPLICATE KEY UPDATE
-            knife = VALUES(knife)
+            knife = VALUES(knife),
+            paint = VALUES(paint),
+            wear = VALUES(wear),
+            seed = VALUES(seed)
         `);
 
         break;
