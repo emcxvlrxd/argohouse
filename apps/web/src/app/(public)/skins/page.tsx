@@ -24,7 +24,7 @@ export default function SkinsPage() {
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <MobileNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen lg:pl-64">
           <Navbar onMenuClick={() => setSidebarOpen(true)} />
           <main className="p-4 lg:p-6 flex flex-col h-[calc(100vh-4rem)]">
             <div className="flex items-center gap-3 mb-4">

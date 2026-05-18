@@ -11,6 +11,7 @@ import {
   Gauge,
   Shield,
   Circle,
+  Medal,
 } from "lucide-react";
 import { t } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ const categories: Category[] = [
   { id: "pistols", label: t("Pistols"), icon: Circle },
   { id: "agents", label: t("Agents"), icon: Users },
   { id: "music", label: t("Music Kits"), icon: Music },
+  { id: "pins", label: t("Pins"), icon: Medal },
 ];
 
 interface CategoryNavProps {

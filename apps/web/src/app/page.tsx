@@ -60,7 +60,7 @@ export default function HomePage() {
           isAdmin={(session.user as any)?.role === "admin"}
         />
 
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen lg:pl-64">
           <Navbar onMenuClick={() => setSidebarOpen(true)} />
 
           <main className="p-4 lg:p-6 space-y-6">

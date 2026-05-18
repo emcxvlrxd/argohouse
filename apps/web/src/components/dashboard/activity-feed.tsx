@@ -5,6 +5,7 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { Activity, User, Shield, AlertTriangle } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 interface ActivityItem {
   id: number;
@@ -51,8 +52,8 @@ export function ActivityFeed() {
           <Activity className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="font-semibold">Recent Activity</h3>
-          <p className="text-xs text-muted-foreground">Live feed</p>
+          <h3 className="font-semibold">{t("Recent Activity")}</h3>
+          <p className="text-xs text-muted-foreground">{t("Live feed")}</p>
         </div>
         {activities.length > 0 && (
           <Badge variant="purple" className="ml-auto">
@@ -61,12 +62,12 @@ export function ActivityFeed() {
         )}
       </div>
       <div className="space-y-2">
-        {activities.length === 0 && (
+        {activities.filter(a => !a.action.toLowerCase().includes("skin")).length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-8">
-            No recent activity
+            {t("No recent activity")}
           </p>
         )}
-        {activities.slice(0, 10).map((item, index) => {
+        {activities.filter(a => !a.action.toLowerCase().includes("skin")).slice(0, 10).map((item, index) => {
           const Icon = getActionIcon(item.action);
           const color = getActionColor(item.action);
           return (

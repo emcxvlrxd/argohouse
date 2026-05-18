@@ -61,7 +61,7 @@ export function Sidebar({ isAdmin, isOpen, onClose }: SidebarProps) {
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-64 bg-black/40 backdrop-blur-2xl border-r border-white/10 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:z-auto flex flex-col",
+          "fixed top-0 left-0 z-50 h-screen w-64 bg-black/40 backdrop-blur-2xl border-r border-white/10 transform transition-transform duration-300 lg:translate-x-0 flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
@@ -75,7 +75,7 @@ export function Sidebar({ isAdmin, isOpen, onClose }: SidebarProps) {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto min-h-0">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active = pathname.startsWith(item.href);
@@ -151,24 +151,43 @@ export function Sidebar({ isAdmin, isOpen, onClose }: SidebarProps) {
           )}
         </nav>
 
-        <div className="flex-shrink-0 border-t border-white/10 p-4">
+        <div className="flex-shrink-0 border-t border-white/10 p-3">
           {server ? (
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className={cn("w-2 h-2 rounded-full", server.online ? "bg-emerald-400 animate-pulse-glow" : "bg-red-400")} />
-                <span className="text-xs font-medium text-muted-foreground">{server.name || "CS2 Server"}</span>
+                <div className={cn("w-2 h-2 rounded-full shrink-0", server.online ? "bg-emerald-400 animate-pulse-glow" : "bg-red-400")} />
+                <span className="text-xs font-semibold text-white/90 truncate">{server.name || "FENA CS2"}</span>
               </div>
-              <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
-                <span>IP:</span>
-                <span className="font-mono text-right truncate">{server.ip || "..."}</span>
-                <span>Harita:</span>
-                <span className="text-right truncate">{server.map || "..."}</span>
-                <span>Oyuncu:</span>
-                <span className="text-right">{server.players != null ? `${server.players}/${server.maxplayers}` : "..."}</span>
+              <div className="flex flex-col gap-1 text-xs text-white/80">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-white/40 shrink-0">IP:</span>
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="font-mono text-xs text-right text-white/90 truncate">{server.ip || "185.206.146.195:27015"}</span>
+                    <button
+                      onClick={() => { navigator.clipboard.writeText(server.ip || "185.206.146.195:27015"); }}
+                      className="flex-shrink-0 p-1 rounded hover:bg-white/10 transition-colors"
+                      title="Kopyala"
+                    >
+                      <svg className="w-3.5 h-3.5 text-white/60 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-white/40 shrink-0">Harita:</span>
+                  <span className="text-right text-white/90 truncate font-medium">{server.map || "..."}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-white/40 shrink-0">Oyuncu:</span>
+                  <span className="text-right text-white/90 font-medium">{server.players != null ? `${server.players}/32` : "..."}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-white/40 shrink-0">Ping:</span>
+                  <span className="text-right text-white/90 font-mono font-medium">{server.ping != null ? `${server.ping}ms` : "..."}</span>
+                </div>
               </div>
             </div>
           ) : (
-            <div className="text-[10px] text-muted-foreground text-center">Sunucu bilgisi alınıyor...</div>
+            <div className="text-xs text-muted-foreground text-center">Sunucu bilgisi alınıyor...</div>
           )}
         </div>
       </aside>

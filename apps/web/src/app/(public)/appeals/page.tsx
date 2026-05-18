@@ -2,14 +2,16 @@
 
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Send, Paperclip, X, Image as ImageIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Toast } from "@/components/ui/toast";
+import { AlertTriangle, Send, Paperclip, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { t } from "@/lib/i18n";
 
 export default function AppealsPage() {
@@ -21,8 +23,23 @@ export default function AppealsPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [appeals, setAppeals] = useState<any[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
 
   if (!session) redirect("/");
+
+  useEffect(() => {
+    const loadAppeals = async () => {
+      try {
+        const res = await fetch("/api/appeals");
+        const data = await res.json();
+        setAppeals(data.appeals || []);
+      } catch {} finally { setLoadingList(false); }
+    };
+    loadAppeals();
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
@@ -42,19 +59,31 @@ export default function AppealsPage() {
     setPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: submit to API
+    if (!message.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/appeals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: appealType, reason, message }) });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg("İtiraz gönderildi!");
+        setReason(""); setMessage(""); setFiles([]); setPreviews([]);
+        setAppeals((prev) => [data.appeal, ...prev]);
+        setTimeout(() => setSuccessMsg(""), 3000);
+      }
+    } catch {} finally { setSubmitting(false); }
   };
 
   return (
     <div className="min-h-screen bg-background">
+      <Toast message={successMsg || "İtiraz başarıyla gönderildi!"} type="success" visible={!!successMsg} onClose={() => setSuccessMsg("")} />
       <div className="fixed inset-0 bg-grid pointer-events-none" />
       <div className="fixed inset-0 bg-aurora pointer-events-none opacity-50" />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <MobileNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen lg:pl-64">
           <Navbar onMenuClick={() => setSidebarOpen(true)} />
           <main className="p-4 lg:p-6 space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -140,11 +169,33 @@ export default function AppealsPage() {
                     ))}
                   </div>
                 </div>
-                <Button type="submit">
-                  <Send className="w-4 h-4 mr-2" />
+                <Button type="submit" disabled={submitting}>
+                  {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
                   {t("Submit Appeal")}
                 </Button>
               </form>
+            </GlassCard>
+
+            <GlassCard glow="none">
+              <h3 className="font-semibold mb-4">{t("Your Appeals")}</h3>
+              {loadingList ? (
+                <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+              ) : appeals.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">{t("No appeals submitted yet")}</p>
+              ) : (
+                <div className="space-y-2">
+                  {appeals.map((a) => (
+                    <div key={a.id} className="rounded-lg bg-white/[0.03] p-2.5 border border-white/[0.06]">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-xs font-medium capitalize">{a.type} Appeal</p>
+                        <Badge variant={a.status === "pending" ? "purple" : "secondary"} className="text-[8px] px-1.5">{a.status}</Badge>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground line-clamp-2">{a.message}</p>
+                      <p className="text-[8px] text-muted-foreground/50 mt-1">{new Date(a.created_at).toLocaleDateString()}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </GlassCard>
           </main>
         </div>

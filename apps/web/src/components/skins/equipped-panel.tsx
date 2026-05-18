@@ -4,11 +4,18 @@ import { useEffect, useState } from "react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlayerEquipment } from "@/types";
-import { Package, Swords, HandMetal, Users, Music } from "lucide-react";
+import { Package, Swords, HandMetal, Users, Music, Medal, Crosshair } from "lucide-react";
 
 function toAbsoluteUrl(url: string): string {
   if (!url || url.startsWith("data:") || url.startsWith("http")) return url;
   return `https://raw.githubusercontent.com/Nereziel/cs2-WeaponPaints/main/website/img/skins/${url}`;
+}
+
+interface EquipItem {
+  icon: any;
+  label: string;
+  name: string;
+  img: string;
 }
 
 export function EquippedPanel() {
@@ -39,51 +46,62 @@ export function EquippedPanel() {
     );
   }
 
-  const items: { icon: any; label: string; data: any[]; render: (item: any) => { name: string; img: string } }[] = [
-    { icon: Swords, label: "Skins", data: equipment?.skins || [], render: (s) => ({ name: s.paint_name || "Skin", img: s.cdnImage || toAbsoluteUrl(s.image || "") }) },
-    { icon: HandMetal, label: "Knife", data: equipment?.knife || [], render: (k) => ({ name: k.paint_name || "Knife", img: k.cdnImage || toAbsoluteUrl(k.image || "") }) },
-    { icon: HandMetal, label: "Gloves", data: equipment?.gloves || [], render: (g) => ({ name: g.paint_name || "Gloves", img: g.cdnImage || toAbsoluteUrl(g.image || "") }) },
-    { icon: Music, label: "Music", data: equipment?.music || [], render: (m) => ({ name: `Kit #${m.music_id}`, img: "" }) },
-  ];
+  const items: EquipItem[] = [];
+
+  if (equipment?.skins?.length) {
+    for (const s of equipment.skins) {
+      items.push({ icon: Crosshair, label: "Skin", name: s.paint_name || "Skin", img: s.cdnImage || toAbsoluteUrl(s.image || "") });
+    }
+  }
+  if (equipment?.knife?.length) {
+    for (const k of equipment.knife) {
+      items.push({ icon: Swords, label: "Knife", name: k.paint_name || "Knife", img: k.cdnImage || toAbsoluteUrl(k.image || "") });
+    }
+  }
+  if (equipment?.gloves?.length) {
+    for (const g of equipment.gloves) {
+      items.push({ icon: HandMetal, label: "Glove", name: g.paint_name || "Gloves", img: g.cdnImage || toAbsoluteUrl(g.image || "") });
+    }
+  }
+  if (equipment?.agents?.length) {
+    for (const a of equipment.agents) {
+      items.push({ icon: Users, label: "Agent", name: a.paint_name || (a.team === 2 ? "T" : "CT") + " Agent", img: a.image || "" });
+    }
+  }
+  if (equipment?.music?.length) {
+    for (const m of equipment.music) {
+      items.push({ icon: Music, label: "Music", name: m.paint_name || `Kit #${m.music_id}`, img: m.image || "" });
+    }
+  }
+  if (equipment?.pins?.length) {
+    for (const p of equipment.pins) {
+      items.push({ icon: Medal, label: "Pin", name: p.paint_name || `Pin #${p.pin}`, img: p.image || "" });
+    }
+  }
 
   return (
-    <GlassCard glow="cyan">
-      <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-          <Package className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <h3 className="font-semibold text-sm">Your Equipment</h3>
-          <p className="text-[10px] text-muted-foreground">Currently equipped items</p>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        {equipment?.agents && (
-          <div className="flex gap-2">
-            <EquipMini name="CT Agent" img="" icon={Users} />
-            <EquipMini name="T Agent" img="" icon={Users} />
-          </div>
-        )}
-
-        {items.map((section) =>
-          section.data.length > 0 && (
-            <div key={section.label}>
-              <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">{section.label}</p>
-              <div className="grid grid-cols-2 gap-1.5">
-                {section.data.map((item: any, i: number) => {
-                  const { name, img } = section.render(item);
-                  return <EquipMini key={i} name={name} img={img} />;
-                })}
+    <GlassCard glow="none">
+      {items.length === 0 ? (
+        <p className="text-xs text-muted-foreground text-center py-4">No items equipped.</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+          {items.map((item, i) => (
+            <div key={i} className="flex items-center gap-2 rounded-lg bg-white/[0.03] p-1.5 border border-white/[0.06]">
+              <div className="w-8 h-8 rounded-md bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                {item.img ? (
+                  <img src={item.img} alt={item.name} className="w-full h-full object-contain" loading="lazy" />
+                ) : (
+                  <item.icon className="w-4 h-4 text-muted-foreground" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wider leading-none mb-0.5">{item.label}</p>
+                <p className="text-[11px] font-medium truncate leading-none">{item.name}</p>
               </div>
             </div>
-          )
-        )}
-
-        {!equipment?.skins?.length && !equipment?.knife?.length && !equipment?.gloves?.length && !equipment?.agents && (
-          <p className="text-xs text-muted-foreground text-center py-4">No items equipped yet.</p>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
     </GlassCard>
   );
 }

@@ -7,8 +7,9 @@ import {
   Crosshair,
   Clock,
   Swords,
-  TrendingUp,
+  Calendar,
 } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 interface Stats {
   totalPlayers: number;
@@ -16,6 +17,7 @@ interface Stats {
   totalPlaytime: number;
   weeklyKills: number;
   topKD: number;
+  resetIn?: string;
 }
 
 export function StatsGrid() {
@@ -25,6 +27,7 @@ export function StatsGrid() {
     totalPlaytime: 0,
     weeklyKills: 0,
     topKD: 0,
+    resetIn: "",
   });
 
   useEffect(() => {
@@ -32,7 +35,18 @@ export function StatsGrid() {
       try {
         const res = await fetch("/api/players?type=stats");
         const data = await res.json();
-        if (!data.error) setStats(data);
+        if (!data.error) {
+          // Calculate time until next Sunday midnight
+          const now = new Date();
+          const nextSunday = new Date(now);
+          nextSunday.setHours(24, 0, 0, 0);
+          nextSunday.setDate(now.getDate() + (7 - now.getDay()));
+          const diffMs = nextSunday.getTime() - now.getTime();
+          const days = Math.floor(diffMs / 86400000);
+          const hours = Math.floor((diffMs % 86400000) / 3600000);
+          data.resetIn = days > 0 ? `${days}g ${hours}s` : `${hours}s`;
+          setStats(data);
+        }
       } catch {}
     };
     fetchStats();
@@ -43,29 +57,29 @@ export function StatsGrid() {
   const items = [
     {
       icon: Crosshair,
-      label: "Total Kills",
+      label: t("Total Kills"),
       value: stats.totalKills.toLocaleString(),
       color: "from-purple-500 to-purple-600",
       delay: 0,
     },
     {
       icon: Clock,
-      label: "Total Playtime",
+      label: t("Total Playtime"),
       value: `${Math.floor(stats.totalPlaytime / 3600)}h`,
       color: "from-cyan-500 to-cyan-600",
       delay: 0.1,
     },
     {
       icon: Swords,
-      label: "Weekly Kills",
+      label: t("Weekly Kills"),
       value: stats.weeklyKills.toLocaleString(),
       color: "from-pink-500 to-pink-600",
       delay: 0.2,
     },
     {
-      icon: TrendingUp,
-      label: "Top K/D",
-      value: stats.topKD.toFixed(2),
+      icon: Calendar,
+      label: t("Sıfırlanma"),
+      value: stats.resetIn || "...",
       color: "from-amber-500 to-amber-600",
       delay: 0.3,
     },

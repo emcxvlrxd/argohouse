@@ -31,11 +31,12 @@ export async function GET() {
 
     return NextResponse.json({
       online: true,
+      ip: `${ip}:${port}`,
       name: server.name || "FENA CS2",
       map: server.map || "Unknown",
-      maxplayers: server.maxPlayers || 0,
+      maxplayers: 32,
       players: server.players || 0,
-      ping: Math.round(server.ping || 0),
+      ping: server.ping != null ? Math.round(server.ping) : 0,
       tickrate: 128,
       raw: server,
     });

@@ -14,6 +14,7 @@ import {
   Zap,
   Globe,
 } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 export function ServerStatusCard() {
   const [status, setStatus] = useState<ServerStatus | null>(null);
@@ -62,7 +63,7 @@ export function ServerStatusCard() {
               <Server className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h3 className="font-semibold">Server Status</h3>
+              <h3 className="font-semibold">{t("Server Status")}</h3>
               <p className="text-xs text-muted-foreground">{status?.name || "FENA CS2"}</p>
             </div>
           </div>
@@ -71,7 +72,7 @@ export function ServerStatusCard() {
             className="text-xs"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-current mr-1.5 animate-pulse" />
-            {status?.online ? "Online" : "Offline"}
+            {status?.online ? t("Online") : t("Offline")}
           </Badge>
         </div>
 
@@ -82,25 +83,25 @@ export function ServerStatusCard() {
         >
           <StatItem
             icon={Users}
-            label="Players"
+            label={t("Players")}
             value={`${status?.players || 0} / ${status?.maxplayers || 0}`}
             delay={0}
           />
           <StatItem
             icon={MapIcon}
-            label="Map"
-            value={status?.map || "Unknown"}
+            label={t("Map")}
+            value={status?.map || "..."}
             delay={0.1}
           />
           <StatItem
             icon={Activity}
-            label="Ping"
-            value={status?.ping ? `${status.ping}ms` : "N/A"}
+            label={t("Ping")}
+            value={status?.ping != null ? `${status.ping}ms` : "..."}
             delay={0.2}
           />
           <StatItem
             icon={Zap}
-            label="Tickrate"
+            label={t("Tickrate")}
             value={status?.tickrate ? `${status.tickrate}` : "64"}
             delay={0.3}
           />

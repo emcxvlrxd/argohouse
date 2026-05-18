@@ -136,7 +136,25 @@ export async function GET(req: NextRequest) {
       }
 
       default: {
-        const players = await prisma.user.findMany({
+        const singleSteamid = req.nextUrl.searchParams.get("steamid");
+        if (singleSteamid) {
+          const user = await prisma.user.findUnique({
+            where: { steamid: singleSteamid },
+            select: {
+              steamid: true,
+              steamid64: true,
+              username: true,
+              avatar: true,
+              avatarfull: true,
+              role: true,
+              last_login: true,
+              isBanned: true,
+            },
+          });
+          return NextResponse.json(user || { error: "User not found" }, { status: user ? 200 : 404 });
+        }
+
+        const rawPlayers = await prisma.user.findMany({
           orderBy: { last_login: "desc" },
           take: 50,
           select: {
@@ -147,6 +165,14 @@ export async function GET(req: NextRequest) {
             last_login: true,
             isBanned: true,
           },
+        });
+
+        // Deduplicate by steamid
+        const seen = new Set<string>();
+        const players = rawPlayers.filter((p) => {
+          if (seen.has(p.steamid)) return false;
+          seen.add(p.steamid);
+          return true;
         });
 
         return NextResponse.json({ players });

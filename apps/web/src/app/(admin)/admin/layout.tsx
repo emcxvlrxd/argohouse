@@ -51,7 +51,7 @@ export default function AdminLayout({
           </>
         )}
 
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen lg:pl-64">
           <header className="sticky top-0 z-30 bg-black/40 backdrop-blur-2xl border-b border-white/10">
             <div className="flex items-center justify-between px-4 lg:px-6 h-16">
               <div className="flex items-center gap-3">

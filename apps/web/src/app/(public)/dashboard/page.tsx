@@ -14,6 +14,7 @@ import { ActivityFeed } from "@/components/dashboard/activity-feed";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Sparkles, Crosshair, Shield, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { t } from "@/lib/i18n";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -36,20 +37,20 @@ export default function DashboardPage() {
           onClose={() => setSidebarOpen(false)}
           isAdmin={(session.user as any)?.role === "admin"}
         />
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen lg:pl-64">
           <Navbar onMenuClick={() => setSidebarOpen(true)} />
           <main className="p-4 lg:p-6 space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold font-display">Dashboard</h1>
+                <h1 className="text-2xl font-bold font-display">{t("Dashboard")}</h1>
                 <p className="text-sm text-muted-foreground">
-                  Welcome back, {(session.user as any)?.username}
+                  {t("Welcome back")}, {(session.user as any)?.username}
                 </p>
               </div>
               <Link href="/skins">
                 <button className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 h-10 px-5 py-2 bg-gradient-to-r from-neon-purple via-violet-500 to-neon-cyan text-white shadow-lg shadow-purple-500/20 hover:shadow-purple-500/40">
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Customize Skins
+                  {t("Customize Skins")}
                 </button>
               </Link>
             </div>
@@ -66,8 +67,8 @@ export default function DashboardPage() {
                     <Crosshair className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Quick Actions</h3>
-                    <p className="text-xs text-muted-foreground">Server management</p>
+                    <h3 className="font-semibold">{t("Quick Actions")}</h3>
+                    <p className="text-xs text-muted-foreground">{t("Server management")}</p>
                   </div>
                 </div>
                 <div className="space-y-2">

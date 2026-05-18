@@ -1,0 +1,17 @@
+import { PrismaClient } from '@prisma/client';
+const p = new PrismaClient();
+const steamid = '76561198374121144';
+const r = await p.wpSkin.findMany({where:{steamid}});
+console.log('skins:', r.length);
+for (const s of r.slice(0,2)) console.log(' ', JSON.stringify(s));
+const k = await p.wpKnife.findMany({where:{steamid}});
+console.log('knife:', k.length, k.length ? JSON.stringify(k[0]) : '');
+const g = await p.wpGlove.findMany({where:{steamid}});
+console.log('gloves:', g.length, g.length ? JSON.stringify(g[0]) : '');
+const a = await p.wpAgent.findMany({where:{steamid}});
+console.log('agents:', a.length, a.length ? JSON.stringify(a[0]) : '');
+const m = await p.playerMusic.findMany({where:{steamid}});
+console.log('music:', m.length, m.length ? JSON.stringify(m[0]) : '');
+const pi = await p.wpPin.findMany({where:{steamid}});
+console.log('pins:', pi.length, pi.length ? JSON.stringify(pi[0]) : '');
+await p.$disconnect();

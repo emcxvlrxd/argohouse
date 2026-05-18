@@ -87,6 +87,7 @@ export async function GET(req: NextRequest) {
         weapon_defindex: a.team === 2 ? 2 : a.team === 3 ? 3 : 0,
         rarity: "3",
         team: a.team,
+        model: a.model || "",
       }));
       return NextResponse.json({ skins: agents });
     }
@@ -97,11 +98,24 @@ export async function GET(req: NextRequest) {
         paint_name: m.name || "Unknown Music Kit",
         weapon_name: "Music Kit",
         image: m.image || "",
-        paint_id: m.id || 0,
+        paint_id: Number(m.id) || 0,
         weapon_defindex: 0,
         rarity: "4",
       }));
       return NextResponse.json({ skins: music });
+    }
+
+    if (type === "pins") {
+      const pins = loadJson("collectibles").map((p: any, i: number) => ({
+        id: i,
+        paint_name: p.name || "Unknown Pin",
+        weapon_name: "Pin",
+        image: p.image || "",
+        paint_id: Number(p.id) || 0,
+        weapon_defindex: 0,
+        rarity: "5",
+      }));
+      return NextResponse.json({ skins: pins });
     }
 
     if (type === "weapons") {
@@ -129,11 +143,13 @@ export async function GET(req: NextRequest) {
 
     if (type === "equipped") {
       const targetSteamid = req.nextUrl.searchParams.get("steamid") || steamid;
-      const [dbSkins, dbKnife, dbGloves, dbMusic] = await Promise.all([
+      const [dbSkins, dbKnife, dbGloves, dbAgents, dbMusic, dbPins] = await Promise.all([
         prisma.wpSkin.findMany({ where: { steamid: targetSteamid } }),
         prisma.wpKnife.findMany({ where: { steamid: targetSteamid } }),
         prisma.wpGlove.findMany({ where: { steamid: targetSteamid } }),
+        prisma.wpAgent.findMany({ where: { steamid: targetSteamid } }),
         prisma.playerMusic.findMany({ where: { steamid: targetSteamid } }),
+        prisma.wpPin.findMany({ where: { steamid: targetSteamid } }),
       ]);
 
       const allSkins = loadJson("skins").map(normalizeSkin);
@@ -145,19 +161,27 @@ export async function GET(req: NextRequest) {
       const allKnives = allSkins.filter((s: any) => s.weapon_defindex >= 500);
       const allWeapons = allSkins.filter((s: any) => s.weapon_defindex < 500);
 
-      const enrichedSkins = await Promise.all(dbSkins.map(async (s) => {
+      // Deduplicate skins by weapon, keep first match
+      const seenSkins = new Set<string>();
+      const enrichedSkins: any[] = [];
+      for (const s of dbSkins) {
         const match = allWeapons.find((x: any) => x.weapon_name === s.weapon && x.paint_id === s.paint);
-        const defindex = match?.weapon_defindex || 0;
-        const cdn = await getCdnImage(defindex, s.paint);
-        return { ...s, weapon_defindex: defindex, weapon_paint_id: s.paint, paint_name: match?.paint_name || "Unknown", image: match?.image || "", cdnImage: cdn, weapon_name: match?.weapon_name || s.weapon };
-      }));
+        if (!match) continue;
+        const dedupKey = `${s.weapon}`;
+        if (seenSkins.has(dedupKey)) continue;
+        seenSkins.add(dedupKey);
+        const cdn = await getCdnImage(match.weapon_defindex, s.paint);
+        enrichedSkins.push({ ...s, weapon_defindex: match.weapon_defindex, weapon_paint_id: s.paint, paint_name: match.paint_name, image: match.image || "", cdnImage: cdn, weapon_name: match.weapon_name || s.weapon });
+      }
 
       const enrichedKnife = await Promise.all(dbKnife.map(async (k) => {
-        const match = allKnives.find((x: any) => x.weapon_name === k.knife);
-        const defindex = match?.weapon_defindex || 0;
-        const paintId = k.paint || match?.paint_id || 0;
+        const match = allKnives.find((x: any) => x.weapon_name === k.knife && Number(x.paint_id) === k.paint);
+        const fallback = allKnives.find((x: any) => x.weapon_name === k.knife);
+        const matchData = match || fallback;
+        const defindex = matchData?.weapon_defindex || 0;
+        const paintId = k.paint;
         const cdn = await getCdnImage(defindex, paintId);
-        return { ...k, weapon_defindex: defindex, weapon_paint_id: paintId, paint_name: match?.paint_name || "Default Knife", image: match?.image || "", cdnImage: cdn };
+        return { ...k, weapon_defindex: defindex, weapon_paint_id: paintId, paint_name: matchData?.paint_name || "Default Knife", image: matchData?.image || "", cdnImage: cdn };
       }));
 
       const enrichedGloves = await Promise.all(dbGloves.map(async (g) => {
@@ -167,12 +191,40 @@ export async function GET(req: NextRequest) {
         return { ...g, weapon_paint_id: paintId, paint_name: match?.paint_name || "Default Gloves", image: match?.image || "", cdnImage: cdn, weapon_name: g.gloves || "" };
       }));
 
+      const allAgents = loadJson("agents");
+      const allMusic = loadJson("music");
+      const allPins = loadJson("collectibles");
+
+      const enrichedAgents = dbAgents.map((a: any) => {
+        const tMatch = a.agent_t ? allAgents.find((x: any) => x.model === a.agent_t) : null;
+        const ctMatch = a.agent_ct ? allAgents.find((x: any) => x.model === a.agent_ct) : null;
+        const match = tMatch || ctMatch;
+        return {
+          ...a,
+          paint_name: match?.agent_name || a.agent_t?.split("/").pop()?.replace(".mdl","") || a.agent_ct?.split("/").pop()?.replace(".mdl","") || "Varsayılan Ajan",
+          image: match?.image || "",
+          team: match?.team || 0,
+        };
+      });
+
+      const enrichedMusic = dbMusic.map((m: any) => {
+        const match = allMusic.find((x: any) => Number(x.id) === m.music_id);
+        return { ...m, paint_name: match?.name || `Music Kit #${m.music_id}`, image: match?.image || "" };
+      });
+
+      const enrichedPins = dbPins.map((p: any) => {
+        const medalId = p.pin || 0;
+        const match = allPins.find((x: any) => Number(x.id) === medalId);
+        return { ...p, paint_name: match?.name || `Pin #${medalId}`, image: match?.image || "" };
+      });
+
       return NextResponse.json({
         skins: enrichedSkins,
         knife: enrichedKnife,
         gloves: enrichedGloves,
-        agents: null,
-        music: dbMusic,
+        agents: enrichedAgents,
+        music: enrichedMusic,
+        pins: enrichedPins,
       });
     }
 

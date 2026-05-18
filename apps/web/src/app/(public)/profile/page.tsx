@@ -20,23 +20,16 @@ import {
   HandMetal,
   ExternalLink,
   Crosshair,
+  Music,
+  Medal,
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { t } from "@/lib/i18n";
 
-interface ProfileData {
-  user: any;
-  equipment: {
-    skins: number;
-    knife: number;
-    gloves: number;
-    agents: any;
-  };
-  stats: {
-    totalKills: number;
-    totalPlaytime: number;
-    kd: number;
-  };
+function toAbsoluteUrl(url: string): string {
+  if (!url || url.startsWith("data:") || url.startsWith("http")) return url;
+  return `https://raw.githubusercontent.com/Nereziel/cs2-WeaponPaints/main/website/img/skins/${url}`;
 }
 
 function ProfileContent() {
@@ -44,12 +37,13 @@ function ProfileContent() {
   const searchParams = useSearchParams();
   const viewSteamid = searchParams.get("steamid");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [equipment, setEquipment] = useState<any>(null);
+  const [profileUser, setProfileUser] = useState<any>(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   const mySteamid = (session?.user as any)?.steamid;
-  const isOwnProfile = !viewSteamid || viewSteamid === mySteamid;
-  const targetSteamid = isOwnProfile ? mySteamid : viewSteamid;
+  const targetSteamid = viewSteamid || mySteamid;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -59,26 +53,48 @@ function ProfileContent() {
           fetch(`/api/players?type=stats&steamid=${targetSteamid}`),
         ]);
         const equip = await equipRes.json();
-        const stats = await statsRes.json();
+        const statsData = await statsRes.json();
 
-        const equipment = {
-          skins: equip.skins?.length || 0,
-          knife: equip.knife?.length || 0,
-          gloves: equip.gloves?.length || 0,
-          agents: equip.agents,
-        };
+        setEquipment(equip);
+        setStats(statsData);
 
-        setProfile({ user: session?.user, equipment, stats });
+        if (targetSteamid && targetSteamid !== mySteamid) {
+          const userRes = await fetch(`/api/players?steamid=${targetSteamid}`);
+          const userData = await userRes.json();
+          setProfileUser(userData.user || userData);
+        } else {
+          setProfileUser(session?.user);
+        }
       } catch {} finally {
         setLoading(false);
       }
     };
     if (session) fetchProfile();
-  }, [session, targetSteamid]);
+  }, [session, targetSteamid, mySteamid]);
 
   if (!session) redirect("/");
 
-  const user = session.user as any;
+  const displayUser = profileUser || session?.user;
+  const equipItems: { icon: any; label: string; items: any[] }[] = [];
+
+  if (equipment?.skins?.length) {
+    equipItems.push({ icon: Crosshair, label: t("Skin"), items: equipment.skins });
+  }
+  if (equipment?.knife?.length) {
+    equipItems.push({ icon: Swords, label: t("Knife"), items: equipment.knife });
+  }
+  if (equipment?.gloves?.length) {
+    equipItems.push({ icon: HandMetal, label: t("Glove"), items: equipment.gloves });
+  }
+  if (equipment?.agents?.length) {
+    equipItems.push({ icon: Users, label: t("Agent"), items: equipment.agents });
+  }
+  if (equipment?.music?.length) {
+    equipItems.push({ icon: Music, label: t("Music"), items: equipment.music });
+  }
+  if (equipment?.pins?.length) {
+    equipItems.push({ icon: Medal, label: t("Pin"), items: equipment.pins });
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -87,7 +103,7 @@ function ProfileContent() {
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <MobileNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen lg:pl-64">
           <Navbar onMenuClick={() => setSidebarOpen(true)} />
           <main className="p-4 lg:p-6 space-y-6">
             {loading ? (
@@ -101,16 +117,16 @@ function ProfileContent() {
                   <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-cyan-500/10" />
                   <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6">
                     <Avatar className="w-24 h-24 ring-4 ring-purple-500/30">
-                      <AvatarImage src={user.avatarfull || user.avatar} alt={user.username} />
+                      <AvatarImage src={displayUser?.avatarfull || displayUser?.avatar} alt={displayUser?.username} />
                       <AvatarFallback><User className="w-8 h-8" /></AvatarFallback>
                     </Avatar>
                     <div className="text-center sm:text-left">
-                      <h1 className="text-2xl font-bold font-display">{user.username}</h1>
-                      <p className="text-sm text-muted-foreground font-mono">{user.steamid}</p>
+                      <h1 className="text-2xl font-bold font-display">{displayUser?.username || "Unknown"}</h1>
+                      <p className="text-sm text-muted-foreground font-mono">{targetSteamid}</p>
                       <div className="flex items-center gap-2 mt-2 justify-center sm:justify-start">
-                        <Badge variant="purple">{user.role}</Badge>
+                        <Badge variant="purple">{displayUser?.role || "user"}</Badge>
                         <a
-                          href={`https://steamcommunity.com/profiles/${user.steamid64 || user.steamid}`}
+                          href={`https://steamcommunity.com/profiles/${displayUser?.steamid64 || targetSteamid}`}
                           target="_blank"
                           className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-white transition-colors"
                         >
@@ -124,10 +140,10 @@ function ProfileContent() {
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { icon: Swords, label: t("Total Kills"), value: profile?.stats.totalKills.toLocaleString() || "0", color: "from-rose-500 to-pink-600" },
-                    { icon: Clock, label: t("Playtime"), value: `${Math.floor((profile?.stats.totalPlaytime || 0) / 3600)}h`, color: "from-cyan-500 to-blue-600" },
-                    { icon: Crosshair, label: t("K/D"), value: (profile?.stats.kd || 0).toFixed(2), color: "from-amber-500 to-orange-600" },
-                    { icon: Palette, label: t("Skins Set"), value: profile?.equipment.skins.toString() || "0", color: "from-purple-500 to-violet-600" },
+                    { icon: Swords, label: t("Total Kills"), value: stats?.totalKills?.toLocaleString() || "0", color: "from-rose-500 to-pink-600" },
+                    { icon: Clock, label: t("Playtime"), value: `${Math.floor((stats?.totalPlaytime || 0) / 3600)}h`, color: "from-cyan-500 to-blue-600" },
+                    { icon: Crosshair, label: t("K/D"), value: (stats?.kd || 0).toFixed(2), color: "from-amber-500 to-orange-600" },
+                    { icon: Palette, label: t("Skins Set"), value: `${equipment?.skins?.length || 0}`, color: "from-purple-500 to-violet-600" },
                   ].map((stat, i) => (
                     <motion.div
                       key={stat.label}
@@ -146,40 +162,78 @@ function ProfileContent() {
                   ))}
                 </div>
 
-                <GlassCard glow="none">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-3">
+                {equipItems.length > 0 && (
+                  <GlassCard glow="none">
+                    <div className="flex items-center gap-3 mb-6">
                       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
                         <Palette className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">{t("Equipment Summary")}</h3>
+                        <h3 className="font-semibold">{t("Equipment")}</h3>
                         <p className="text-xs text-muted-foreground">{t("Current loadout")}</p>
                       </div>
                     </div>
-                    {isOwnProfile && (
-                      <Link href="/skins">
-                        <button className="inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-medium transition-all duration-300 h-9 rounded-lg px-3 text-xs bg-gradient-to-r from-neon-purple to-purple-600 text-white shadow-lg">
-                          {t("Customize")}
-                        </button>
-                      </Link>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {[
-                      { icon: Swords, label: t("Knives"), value: `${profile?.equipment.knife} ${t("equipped")}` },
-                      { icon: HandMetal, label: t("Gloves"), value: `${profile?.equipment.gloves} ${t("equipped")}` },
-                      { icon: User, label: t("Agents"), value: profile?.equipment.agents ? t("Custom") : t("Default") },
-                      { icon: Palette, label: t("Skins"), value: `${profile?.equipment.skins} ${t("items")}` },
-                    ].map((item) => (
-                      <div key={item.label} className="glass rounded-xl p-3 text-center">
-                        <item.icon className="w-5 h-5 mx-auto mb-1 text-neon-cyan" />
-                        <p className="text-xs text-muted-foreground">{item.label}</p>
-                        <p className="text-sm font-medium">{item.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </GlassCard>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {equipItems.map((section) => {
+                        // Deduplicate: agents keep both T/CT, others show unique by item key
+                        const seenKeys = new Set<string>();
+                        const dedupedItems = section.label === t("Agent") ? section.items : section.items.filter((item: any) => {
+                          const key = item.knife || item.weapon || item.music_id || item.id || item.weapon_defindex || "";
+                          if (!key || seenKeys.has(String(key))) return false;
+                          seenKeys.add(String(key));
+                          return true;
+                        });
+                        return (
+                        <div key={section.label} className="space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground/60 uppercase tracking-wider border-b border-white/5 pb-2">
+                            <section.icon className="w-4 h-4 text-neon-purple" />
+                            <span className="font-semibold">{section.label}</span>
+                          </div>
+                          <div className="space-y-1.5">
+                            {dedupedItems.length === 0 && (
+                              <p className="text-[10px] text-muted-foreground/40 text-center py-3">Yok</p>
+                            )}
+                            {dedupedItems.map((item: any, i: number) => {
+                              const itemName = item.paint_name || item.name || item.weapon || item.knife || "Unknown";
+                              let itemImg = item.cdnImage || toAbsoluteUrl(item.image || "");
+                              const isAgent = section.label === t("Agent");
+                              const isMusic = section.label === t("Music");
+                              const isPin = section.label === t("Pin");
+                              if (isAgent) itemImg = item.image || "";
+                              if (isMusic) itemImg = item.image || "";
+                              if (isPin) itemImg = item.image || "";
+                              const sublabel = isAgent ? (item.team === 2 ? "T" : item.team === 3 ? "CT" : "") : (item.weapon?.replace("weapon_", "") || item.knife?.replace("weapon_", "") || "");
+                              return (
+                                <div key={i} className="flex items-center gap-3 rounded-lg bg-white/[0.03] p-2 border border-white/[0.06] hover:bg-white/[0.06] transition-colors">
+                                  <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/5">
+                                    {itemImg ? (
+                                      <img src={itemImg} alt={itemName} className="w-full h-full object-contain" loading="lazy" />
+                                    ) : (
+                                      <section.icon className="w-5 h-5 text-muted-foreground" />
+                                    )}
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium truncate leading-tight text-white/90">{itemName}</p>
+                                    {sublabel && (
+                                      <p className="text-[10px] text-muted-foreground/60 truncate leading-tight mt-0.5">{sublabel}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        );
+                      })}
+                    </div>
+                  </GlassCard>
+                )}
+
+                {equipItems.length === 0 && (
+                  <GlassCard glow="none">
+                    <p className="text-center text-muted-foreground py-8">{t("No equipment data available")}</p>
+                  </GlassCard>
+                )}
               </>
             )}
           </main>

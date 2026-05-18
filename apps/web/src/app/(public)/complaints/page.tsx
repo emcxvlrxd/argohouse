@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Navbar } from "@/components/layout/navbar";
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -10,7 +10,8 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Send, Paperclip, X, Image as ImageIcon } from "lucide-react";
+import { Toast } from "@/components/ui/toast";
+import { MessageCircle, Send, Paperclip, X, Image as ImageIcon, Loader2 } from "lucide-react";
 import { t } from "@/lib/i18n";
 
 export default function ComplaintsPage() {
@@ -21,8 +22,23 @@ export default function ComplaintsPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [complaints, setComplaints] = useState<any[]>([]);
+  const [loadingList, setLoadingList] = useState(true);
 
   if (!session) redirect("/");
+
+  useEffect(() => {
+    const loadComplaints = async () => {
+      try {
+        const res = await fetch("/api/complaints");
+        const data = await res.json();
+        setComplaints(data.complaints || []);
+      } catch {} finally { setLoadingList(false); }
+    };
+    loadComplaints();
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
@@ -42,19 +58,31 @@ export default function ComplaintsPage() {
     setPreviews((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: submit to API
+    if (!title.trim() || !message.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/complaints", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ title, message }) });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMsg("Şikayet gönderildi!");
+        setTitle(""); setMessage(""); setFiles([]); setPreviews([]);
+        setComplaints((prev) => [data.complaint, ...prev]);
+        setTimeout(() => setSuccessMsg(""), 3000);
+      }
+    } catch {} finally { setSubmitting(false); }
   };
 
   return (
     <div className="min-h-screen bg-background">
+      <Toast message={successMsg || "Şikayet başarıyla gönderildi!"} type="success" visible={!!successMsg} onClose={() => setSuccessMsg("")} />
       <div className="fixed inset-0 bg-grid pointer-events-none" />
       <div className="fixed inset-0 bg-aurora pointer-events-none opacity-50" />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
         <MobileNav isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex-1 min-h-screen">
+        <div className="flex-1 min-h-screen lg:pl-64">
           <Navbar onMenuClick={() => setSidebarOpen(true)} />
           <main className="p-4 lg:p-6 space-y-6">
             <div className="flex items-center gap-3 mb-6">
@@ -128,8 +156,8 @@ export default function ComplaintsPage() {
                         ))}
                       </div>
                     </div>
-                    <Button type="submit">
-                      <Send className="w-4 h-4 mr-2" />
+                    <Button type="submit" disabled={submitting}>
+                      {submitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
                       {t("Submit Complaint")}
                     </Button>
                   </form>
@@ -138,9 +166,24 @@ export default function ComplaintsPage() {
               <div>
                 <GlassCard glow="none">
                   <h3 className="font-semibold mb-4">{t("Your Complaints")}</h3>
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    {t("No complaints submitted yet")}
-                  </p>
+                  {loadingList ? (
+                    <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                  ) : complaints.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-8">{t("No complaints submitted yet")}</p>
+                  ) : (
+                    <div className="space-y-2 max-h-80 overflow-y-auto">
+                      {complaints.map((c) => (
+                        <div key={c.id} className="rounded-lg bg-white/[0.03] p-2.5 border border-white/[0.06]">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs font-medium truncate">{c.title}</p>
+                            <Badge variant={c.status === "open" ? "info" : c.status === "resolved" ? "secondary" : "secondary"} className="text-[8px] px-1.5">{c.status}</Badge>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground line-clamp-2">{c.message}</p>
+                          <p className="text-[8px] text-muted-foreground/50 mt-1">{new Date(c.created_at).toLocaleDateString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </GlassCard>
               </div>
             </div>

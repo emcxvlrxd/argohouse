@@ -39,6 +39,8 @@ export interface SkinItem {
   rarity: string;
   image?: string;
   cdnImage?: string;
+  model?: string;
+  team?: number;
 }
 
 export interface WeaponCategory {
@@ -73,4 +75,5 @@ export interface PlayerEquipment {
   gloves: any[];
   agents: any;
   music: any[];
+  pins: any[];
 }

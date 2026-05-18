@@ -18,6 +18,20 @@ import {
 import { t } from "@/lib/i18n";
 import { useSession } from "next-auth/react";
 import { WEAPON_DISPLAY_NAMES } from "@/lib/weapon-categories";
+import { Heart } from "lucide-react";
+
+const FAVORITES_KEY = "fena_fav_skins";
+
+function loadFavorites(): Set<number> {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch { return new Set(); }
+}
+
+function saveFavorites(favs: Set<number>) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favs]));
+}
 
 const SUB_CATEGORIES: Record<string, number[]> = {
   knives: [
@@ -76,6 +90,19 @@ export function WeaponBrowser() {
 
   const [subMenuOpen, setSubMenuOpen] =
     useState(false);
+
+  const [favorites, setFavorites] = useState<Set<number>>(loadFavorites);
+  const [showFavorites, setShowFavorites] = useState(false);
+
+  const toggleFavorite = useCallback((id: number | undefined) => {
+    if (id == null) return;
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      saveFavorites(next);
+      return next;
+    });
+  }, []);
 
   // =========================================
   // FETCH SKINS
@@ -200,7 +227,7 @@ export function WeaponBrowser() {
       if (activeCategory === "knives") {
 
         const KNIFE_MAP: Record<number, string> = {
-          500: "weapon_knife_bayonet",
+          500: "weapon_bayonet",
           503: "weapon_knife_css",
           505: "weapon_knife_flip",
           506: "weapon_knife_gut",
@@ -226,6 +253,7 @@ export function WeaponBrowser() {
           type: "knife",
           data: {
             knife: KNIFE_MAP[defindex] || "weapon_knife",
+            defindex: Number(defindex),
             paintId: Number(paintId),
             seed: Number(seed),
             wear: Number(wear),
@@ -234,6 +262,53 @@ export function WeaponBrowser() {
         };
 
       }
+      // =====================================
+      // AGENTS
+      // =====================================
+
+      else if (activeCategory === "agents") {
+
+        payload = {
+          type: "agent",
+          data: {
+            model: (skin as any).model || "",
+            team: (skin as any).team || 2,
+            paintId: Number(paintId),
+          },
+        };
+
+      }
+
+      // =====================================
+      // MUSIC KITS
+      // =====================================
+
+      else if (activeCategory === "music") {
+
+        payload = {
+          type: "music",
+          data: {
+            paintId: Number(paintId),
+          },
+        };
+
+      }
+
+      // =====================================
+      // PINS
+      // =====================================
+
+      else if (activeCategory === "pins") {
+
+        payload = {
+          type: "pin",
+          data: {
+            paintId: Number(paintId),
+          },
+        };
+
+      }
+
       // =====================================
       // GLOVES
       // =====================================
@@ -260,6 +335,7 @@ export function WeaponBrowser() {
           type: "skin",
           data: {
             weapon: skin.weapon_name,
+            defindex: Number(defindex),
             paintId: Number(paintId),
             seed: Number(seed),
             wear: Number(wear),
@@ -325,11 +401,15 @@ export function WeaponBrowser() {
 
   }, [skins, subFilter]);
 
-  const filteredSkins = filteredBySub.filter((s) =>
-    (s.paint_name || "")
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const filteredSkins = filteredBySub
+    .filter((s) =>
+      !showFavorites || favorites.has(s.id ?? -1)
+    )
+    .filter((s) =>
+      (s.paint_name || "")
+        .toLowerCase()
+        .includes(search.toLowerCase())
+    );
 
   const currentSubOptions =
     activeCategory === "knives"
@@ -436,6 +516,19 @@ export function WeaponBrowser() {
             </div>
           )}
 
+          <button
+            onClick={() => setShowFavorites(!showFavorites)}
+            className={cn(
+              "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-colors whitespace-nowrap",
+              showFavorites
+                ? "border-pink-500/40 bg-pink-500/10 text-pink-300"
+                : "border-white/10 hover:bg-white/5 text-muted-foreground"
+            )}
+          >
+            <Heart className={cn("w-3 h-3", showFavorites && "fill-pink-300")} />
+            Favoriler
+          </button>
+
           {equipMsg && (
             <div className="flex items-center gap-1 text-xs text-emerald-400">
               <CheckCircle className="w-3.5 h-3.5" />
@@ -494,6 +587,9 @@ export function WeaponBrowser() {
                   image={skin.image}
                   cdnImage={skin.cdnImage}
                   selected={selectedId === skin.id}
+                  hideSeedWear={activeCategory === "agents" || activeCategory === "music" || activeCategory === "pins"}
+                  favorite={favorites.has(skin.id ?? -1)}
+                  onToggleFavorite={() => toggleFavorite(skin.id)}
                   onSelect={() =>
                     setSelectedId(
                       selectedId === skin.id

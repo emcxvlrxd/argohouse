@@ -9,30 +9,29 @@ export async function resetWeeklyStats() {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 7);
 
-  const users = await prisma.user.findMany({
-    include: {
-      weeklyStats: {
-        orderBy: { week_start: "desc" },
-        take: 1,
-      },
-    },
+  // Delete all stats from previous weeks (keep current week's data intact)
+  await prisma.weeklyStat.deleteMany({
+    where: { week_start: { lt: weekStart } },
   });
 
+  // Create fresh weekly stats for all users
+  const users = await prisma.user.findMany();
   for (const user of users) {
-    const lastStat = user.weeklyStats[0];
-    if (
-      lastStat &&
-      lastStat.week_start.toDateString() === weekStart.toDateString()
-    ) {
-      continue;
-    }
-    await prisma.weeklyStat.create({
-      data: {
+    const existing = await prisma.weeklyStat.findFirst({
+      where: {
         steamid: user.steamid,
-        week_start: weekStart,
-        week_end: weekEnd,
+        week_start: { gte: weekStart },
       },
     });
+    if (!existing) {
+      await prisma.weeklyStat.create({
+        data: {
+          steamid: user.steamid,
+          week_start: weekStart,
+          week_end: weekEnd,
+        },
+      });
+    }
   }
 }
 

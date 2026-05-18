@@ -119,14 +119,15 @@ model PlayerAgent {
 }
 
 model PlayerMusic {
-  id        Int      @id @default(autoincrement())
-  steamid   String
-  music_id  Int
-  created_at DateTime @default(now())
+  steamid    String
+  music      String  @default("")
+  music_id   Int
+  weapon_team Int
 
   user User @relation(fields: [steamid], references: [steamid], onDelete: Cascade)
 
-  @@index([steamid])
+  @@map("wp_player_music")
+  @@id([steamid, weapon_team])
 }
 
 model WeeklyStat {
@@ -259,4 +260,15 @@ model WpAgent {
   agent_t  String
 
   @@map("wp_player_agents")
+}
+
+model WpPin {
+  id         Int    @id @default(autoincrement())
+  steamid    String
+  weapon_team Int
+  pin        Int    @default(0)
+
+  @@map("wp_player_pins")
+  @@unique([steamid, weapon_team])
+  @@index([steamid])
 }

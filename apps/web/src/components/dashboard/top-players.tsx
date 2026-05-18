@@ -7,6 +7,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { Trophy, Swords, Clock, Crown, User } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 interface PlayerEntry {
   steamid: string;
@@ -37,6 +38,8 @@ export function TopPlayers() {
       }
     };
     fetchData();
+    const interval = setInterval(fetchData, 60000);
+    return () => clearInterval(interval);
   }, []);
 
   if (loading) {
@@ -59,19 +62,19 @@ export function TopPlayers() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <LeaderboardCard
-        title="Top Kills"
+        title={t("Top Kills")}
         icon={Swords}
         color="from-rose-500 to-pink-600"
         data={topKills}
-        valueLabel="Kills"
+        valueLabel={t("Kills")}
         valueKey="kills"
       />
       <LeaderboardCard
-        title="Top Playtime"
+        title={t("Top Playtime")}
         icon={Clock}
         color="from-cyan-500 to-blue-600"
         data={topPlaytime}
-        valueLabel="Time"
+        valueLabel={t("Time")}
         valueKey="playtime"
         format="time"
       />
@@ -109,7 +112,7 @@ function LeaderboardCard({
       <div className="space-y-2">
         {data.length === 0 && (
           <p className="text-sm text-muted-foreground text-center py-8">
-            No data available yet
+            {t("No data available yet")}
           </p>
         )}
         {data.map((player, index) => (
@@ -148,10 +151,10 @@ function LeaderboardCard({
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">
-                {player.username || "Unknown"}
+                {player.username || t("Unknown")}
               </p>
               <p className="text-xs text-muted-foreground">
-                K/D: {player.kd.toFixed(2)}
+                {t("K/D")}: {player.kd.toFixed(2)}
               </p>
             </div>
             <Badge variant="secondary" className="text-xs font-mono">
