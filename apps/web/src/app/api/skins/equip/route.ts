@@ -257,14 +257,19 @@ export async function POST(
 
       case "gloves": {
 
-        // DÜZELTME: data.gloves'dan oku (frontend bu alanı gönderiyor)
-        // data.paintId değil — o alan gloves için gönderilmiyor, her zaman 0 oluyordu
-        const glovePaintId = toNum(data?.gloves);
-        const gloveDefindex = toNum(data?.defindex);
+        // Plugin kaynak koduna göre (WeaponSynchronization.cs):
+        // - wp_player_gloves tablosundan sadece weapon_defindex okunuyor (eldiven tipi)
+        // - paint/wear/seed bilgisi wp_player_skins tablosundan okunuyor
+        // Bu yüzden her iki tabloya da yazmak gerekiyor.
 
-        console.log("[GLOVES] raw data:", data);
+        const glovePaintId = toNum(data?.gloves);   // frontend data.gloves gönderiyor
+        const gloveDefindex = toNum(data?.defindex);  // eldiven tipi (örn: 5034)
+        const gloveWear = toFloat(data?.wear);
+        const gloveSeed = toNum(data?.seed);
+
         console.log("[GLOVES] glovePaintId:", glovePaintId, "gloveDefindex:", gloveDefindex);
 
+        // 1) wp_player_gloves — plugin eldiven tipini buradan okuyor
         await prisma.$executeRaw`
           DELETE FROM wp_player_gloves
           WHERE steamid = ${steamid}
@@ -275,17 +280,32 @@ export async function POST(
           await prisma.$executeRaw`
             INSERT INTO wp_player_gloves (
               steamid,
-              gloves,
-              weapon_defindex,
-              weapon_team
+              weapon_team,
+              weapon_defindex
             )
             VALUES (
               ${steamid},
-              ${glovePaintId},
-              ${gloveDefindex},
-              ${team}
+              ${team},
+              ${gloveDefindex}
             )
+            ON DUPLICATE KEY UPDATE
+              weapon_defindex = ${gloveDefindex}
           `;
+
+        }
+
+        // 2) wp_player_skins — plugin paint/wear/seed bilgisini buradan okuyor
+        for (const team of [2, 3]) {
+
+          await upsertSkin(
+            steamid,
+            "weapon_knife",
+            gloveDefindex,
+            glovePaintId,
+            gloveWear,
+            gloveSeed,
+            team
+          );
 
         }
 
