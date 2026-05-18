@@ -319,6 +319,9 @@ export function WeaponBrowser() {
           type: "gloves",
           data: {
             defindex: Number(defindex),
+            paintId: Number(paintId),
+            seed: Number(seed),
+            wear: Number(wear),
             team: 2,
           },
         };
