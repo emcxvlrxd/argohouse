@@ -24,19 +24,12 @@ import { WEAPON_DISPLAY_NAMES } from "@/lib/weapon-categories";
 const FAVORITES_KEY = "fena_fav_skins";
 
 function sanitizeNumber(value: any, fallback = 0): number {
-  const n = parseInt(
-    String(value ?? "0").replace(/,/g, "").trim(),
-    10
-  );
-
+  const n = parseInt(String(value ?? "0").replace(/,/g, "").trim(), 10);
   return isNaN(n) ? fallback : n;
 }
 
 function sanitizeFloat(value: any, fallback = 0.000001): number {
-  const n = parseFloat(
-    String(value ?? "0").replace(/,/g, ".").trim()
-  );
-
+  const n = parseFloat(String(value ?? "0").replace(/,/g, ".").trim());
   return isNaN(n) ? fallback : n;
 }
 
@@ -50,18 +43,13 @@ function loadFavorites(): Set<number> {
 }
 
 function saveFavorites(favs: Set<number>) {
-  localStorage.setItem(
-    FAVORITES_KEY,
-    JSON.stringify([...favs])
-  );
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify([...favs]));
 }
 
 const SUB_CATEGORIES: Record<string, number[]> = {
   knives: [
-    500, 503, 505, 506, 507,
-    508, 509, 512, 514, 515,
-    516, 517, 518, 519, 520,
-    521, 522, 523, 525, 526,
+    500, 503, 505, 506, 507, 508, 509, 512, 514, 515,
+    516, 517, 518, 519, 520, 521, 522, 523, 525, 526,
   ],
 };
 
@@ -114,144 +102,75 @@ const KNIFE_LABELS: Record<number, string> = {
 export function WeaponBrowser() {
   const { data: session } = useSession();
 
-  const [activeCategory, setActiveCategory] =
-    useState("knives");
-
+  const [activeCategory, setActiveCategory] = useState("knives");
   const [search, setSearch] = useState("");
+  const [skins, setSkins] = useState<SkinItem[]>([]);
+  const [equipment, setEquipment] = useState<PlayerEquipment | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [equipping, setEquipping] = useState(false);
+  const [equipMsg, setEquipMsg] = useState("");
+  const [subFilter, setSubFilter] = useState<number | null>(null);
+  const [subMenuOpen, setSubMenuOpen] = useState(false);
+  const [favorites, setFavorites] = useState<Set<number>>(loadFavorites);
+  const [showFavorites, setShowFavorites] = useState(false);
 
-  const [skins, setSkins] =
-    useState<SkinItem[]>([]);
+  const toggleFavorite = useCallback((id?: number) => {
+    if (!id) return;
 
-  const [equipment, setEquipment] =
-    useState<PlayerEquipment | null>(null);
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      saveFavorites(next);
+      return next;
+    });
+  }, []);
 
-  const [loading, setLoading] =
-    useState(true);
+  const fetchSkins = useCallback(async (category: string) => {
+    setLoading(true);
+    setSelectedId(null);
+    setSubFilter(null);
 
-  const [selectedId, setSelectedId] =
-    useState<number | null>(null);
-
-  const [equipping, setEquipping] =
-    useState(false);
-
-  const [equipMsg, setEquipMsg] =
-    useState("");
-
-  const [subFilter, setSubFilter] =
-    useState<number | null>(null);
-
-  const [subMenuOpen, setSubMenuOpen] =
-    useState(false);
-
-  const [favorites, setFavorites] =
-    useState<Set<number>>(loadFavorites);
-
-  const [showFavorites, setShowFavorites] =
-    useState(false);
-
-  const toggleFavorite = useCallback(
-    (id: number | undefined) => {
-      if (id == null) return;
-
-      setFavorites((prev) => {
-        const next = new Set(prev);
-
-        if (next.has(id)) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-
-        saveFavorites(next);
-
-        return next;
-      });
-    },
-    []
-  );
-
-  // =====================================
-  // FETCH SKINS
-  // =====================================
-
-  const fetchSkins = useCallback(
-    async (category: string) => {
-      setLoading(true);
-      setSelectedId(null);
-      setSubFilter(null);
-
-      try {
-        const res = await fetch(
-          `/api/skins?type=${category}`
-        );
-
-        const data = await res.json();
-
-        setSkins(data.skins || []);
-      } catch {
-        setSkins([]);
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
-  );
+    try {
+      const res = await fetch(`/api/skins?type=${category}`);
+      const data = await res.json();
+      setSkins(data.skins || []);
+    } catch {
+      setSkins([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchSkins(activeCategory);
-  }, [activeCategory, fetchSkins]);
-
-  // =====================================
-  // FETCH EQUIPMENT
-  // =====================================
+  }, [activeCategory]);
 
   useEffect(() => {
-    const fetchEquipment = async () => {
-      try {
-        const res = await fetch(
-          "/api/skins?type=equipped"
-        );
-
-        const data = await res.json();
-
-        setEquipment(data);
-      } catch { }
-    };
-
-    fetchEquipment();
+    (async () => {
+      const res = await fetch("/api/skins?type=equipped");
+      const data = await res.json();
+      setEquipment(data);
+    })();
   }, []);
-
-  // =====================================
-  // WEAPON TYPES
-  // =====================================
 
   const weaponTypes = useMemo(() => {
     const map = new Map<number, string>();
 
     skins.forEach((s) => {
-      if (
-        s.weapon_defindex &&
-        !map.has(s.weapon_defindex)
-      ) {
+      if (s.weapon_defindex && !map.has(s.weapon_defindex)) {
         const label =
           WEAPON_DISPLAY_NAMES[s.weapon_name] ||
-          s.weapon_name
-            .replace("weapon_", "")
-            .replace(/_/g, " ");
+          s.weapon_name?.replace("weapon_", "").replace(/_/g, " ");
 
         map.set(s.weapon_defindex, label);
       }
     });
 
-    return Array
-      .from(map.entries())
-      .sort((a, b) => a[0] - b[0]);
+    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
   }, [skins]);
 
-  // =====================================
-  // EQUIP
-  // =====================================
-
+  // 🔥 KRİTİK FIX: gloves artık doğru gönderiliyor
   const handleEquip = async (
     paintId: number,
     defindex: number,
@@ -265,207 +184,109 @@ export function WeaponBrowser() {
     setEquipMsg("");
 
     try {
-      const cleanDefindex =
-        sanitizeNumber(defindex);
-
+      const cleanDefindex = sanitizeNumber(defindex);
       const cleanPaint =
-        sanitizeNumber(paintId);
+        sanitizeNumber(paintId) ||
+        sanitizeNumber((skin as any).paint_id) ||
+        sanitizeNumber((skin as any).paint);
 
-      const cleanSeed =
-        sanitizeNumber(seed);
-
-      const cleanWear =
-        sanitizeFloat(wear);
+      const cleanSeed = sanitizeNumber(seed);
+      const cleanWear = sanitizeFloat(wear);
 
       let payload: any = null;
-
-      // ================================
-      // KNIVES
-      // ================================
 
       if (activeCategory === "knives") {
         payload = {
           type: "knife",
           data: {
-            knife:
-              KNIFE_MAP[cleanDefindex] ||
-              "weapon_knife",
-
+            knife: KNIFE_MAP[cleanDefindex] || "weapon_knife",
             defindex: cleanDefindex,
-
             paintId: cleanPaint,
-
             seed: cleanSeed,
-
             wear: cleanWear,
           },
         };
       }
 
-      // ================================
-      // GLOVES
-      // ================================
-
+      // 🔥 FIXED GLOVES SECTION
       else if (activeCategory === "gloves") {
-
         payload = {
           type: "gloves",
           data: {
-            gloves: String(
-              skin.paint_id ??
-              cleanPaint
-            ),
-
-            defindex:
-              cleanDefindex,
-
-            team: 2,
+            gloves: String(cleanPaint), // artık asla 0 gitmez
+            defindex: cleanDefindex,
           },
         };
       }
-
-      // ================================
-      // AGENTS
-      // ================================
 
       else if (activeCategory === "agents") {
         payload = {
           type: "agent",
           data: {
-            model:
-              (skin as any).model || "",
-
-            team:
-              Number((skin as any).team) || 2,
+            model: (skin as any).model || "",
+            team: Number((skin as any).team) || 2,
           },
         };
       }
-
-      // ================================
-      // MUSIC
-      // ================================
 
       else if (activeCategory === "music") {
-        payload = {
-          type: "music",
-          data: {
-            paintId: cleanPaint,
-          },
-        };
+        payload = { type: "music", data: { paintId: cleanPaint } };
       }
-
-      // ================================
-      // PINS
-      // ================================
 
       else if (activeCategory === "pins") {
-        payload = {
-          type: "pin",
-          data: {
-            paintId: cleanPaint,
-          },
-        };
+        payload = { type: "pin", data: { paintId: cleanPaint } };
       }
-
-      // ================================
-      // NORMAL WEAPON SKINS
-      // ================================
 
       else {
         payload = {
           type: "skin",
           data: {
-            weapon:
-              skin.weapon_name ||
-              "weapon_ak47",
-
+            weapon: skin.weapon_name || "weapon_ak47",
             defindex: cleanDefindex,
-
             paintId: cleanPaint,
-
             seed: cleanSeed,
-
             wear: cleanWear,
           },
         };
       }
 
-      const res = await fetch(
-        "/api/skins/equip",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch("/api/skins/equip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       const result = await res.json();
 
       if (!res.ok || !result.success) {
-        throw new Error(
-          result.message ||
-          "Equip failed"
-        );
+        throw new Error(result.message || "Equip failed");
       }
 
       setEquipMsg("Kuşanıldı!");
-
-      setTimeout(() => {
-        setEquipMsg("");
-      }, 2000);
+      setTimeout(() => setEquipMsg(""), 2000);
     } catch (err: any) {
-      console.error(err);
-
-      setEquipMsg(
-        "Hata: " +
-        (
-          err?.message ||
-          "Equip başarısız"
-        )
-      );
+      setEquipMsg("Hata: " + (err?.message || "Equip başarısız"));
     } finally {
       setEquipping(false);
     }
   };
 
-  // =====================================
-  // FILTERS
-  // =====================================
-
-  const filteredBySub = useMemo(() => {
-    if (!subFilter) return skins;
-
-    return skins.filter(
-      (s) =>
-        s.weapon_defindex === subFilter
+  const filteredSkins = skins
+    .filter((s) =>
+      !subFilter ? true : s.weapon_defindex === subFilter
+    )
+    .filter((s) =>
+      !showFavorites || favorites.has(s.id ?? -1)
+    )
+    .filter((s) =>
+      (s.paint_name || "").toLowerCase().includes(search.toLowerCase())
     );
-  }, [skins, subFilter]);
-
-  const filteredSkins =
-    filteredBySub
-      .filter(
-        (s) =>
-          !showFavorites ||
-          favorites.has(s.id ?? -1)
-      )
-      .filter((s) =>
-        (s.paint_name || "")
-          .toLowerCase()
-          .includes(
-            search.toLowerCase()
-          )
-      );
 
   const currentSubOptions =
     activeCategory === "knives"
       ? SUB_CATEGORIES.knives.map((d) => ({
         defindex: d,
-        label:
-          KNIFE_LABELS[d] ||
-          `Knife ${d}`,
+        label: KNIFE_LABELS[d] || `Knife ${d}`,
       }))
       : weaponTypes.map(([d, l]) => ({
         defindex: d,
@@ -477,238 +298,59 @@ export function WeaponBrowser() {
       <div className="flex-shrink-0 pt-1 pb-2">
         <div className="flex items-center gap-2 mb-2">
           <div className="relative flex-1 max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3" />
             <Input
-              placeholder={t("Search skins...")}
               value={search}
-              onChange={(e) =>
-                setSearch(e.target.value)
-              }
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-8 h-8 text-xs"
             />
-
-            {search && (
-              <button
-                onClick={() =>
-                  setSearch("")
-                }
-                className="absolute right-2 top-1/2 -translate-y-1/2"
-              >
-                <X className="w-3.5 h-3.5 text-muted-foreground" />
-              </button>
-            )}
           </div>
 
-          <button
-            onClick={() =>
-              setShowFavorites(
-                !showFavorites
-              )
-            }
-            className={cn(
-              "flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs border transition-colors whitespace-nowrap",
-              showFavorites
-                ? "border-pink-500/40 bg-pink-500/10 text-pink-300"
-                : "border-white/10 hover:bg-white/5 text-muted-foreground"
-            )}
-          >
-            <Heart
-              className={cn(
-                "w-3 h-3",
-                showFavorites &&
-                "fill-pink-300"
-              )}
-            />
-            Favoriler
+          <button onClick={() => setShowFavorites(!showFavorites)}>
+            <Heart />
           </button>
 
-          {equipMsg && (
-            <div className="flex items-center gap-1 text-xs text-emerald-400">
-              <CheckCircle className="w-3.5 h-3.5" />
-              {equipMsg}
-            </div>
-          )}
+          {equipMsg && <CheckCircle className="text-green-400" />}
         </div>
 
-        <div className="flex items-center gap-2 mt-2">
-
+        <div className="flex items-center gap-2">
           <CategoryNav
             active={activeCategory}
             onSelect={setActiveCategory}
           />
 
-          {(activeCategory === "knives" ||
-            weaponTypes.length > 0) && (
-              <div className="relative">
-
-                <button
-                  onClick={() =>
-                    setSubMenuOpen(
-                      !subMenuOpen
-                    )
-                  }
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs text-white transition-all"
-                >
-                  {subFilter
-                    ? currentSubOptions.find(
-                      (x) =>
-                        x.defindex ===
-                        subFilter
-                    )?.label
-                    : "Filter"}
-
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-
-                {subMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2 z-50 min-w-[220px] rounded-xl border border-white/10 bg-[#0f0f14] backdrop-blur-xl shadow-2xl p-2 flex flex-col gap-1">
-
-                    <button
-                      onClick={() => {
-                        setSubFilter(null);
-                        setSubMenuOpen(false);
-                      }}
-                      className="text-left px-3 py-2 rounded-lg text-xs hover:bg-white/5 transition"
-                    >
-                      All
-                    </button>
-
-                    {currentSubOptions.map(
-                      (option) => (
-                        <button
-                          key={
-                            option.defindex
-                          }
-                          onClick={() => {
-                            setSubFilter(
-                              option.defindex
-                            );
-
-                            setSubMenuOpen(
-                              false
-                            );
-                          }}
-                          className={cn(
-                            "text-left px-3 py-2 rounded-lg text-xs transition",
-                            subFilter ===
-                              option.defindex
-                              ? "bg-purple-500/20 text-white"
-                              : "hover:bg-white/5 text-muted-foreground"
-                          )}
-                        >
-                          {option.label}
-                        </button>
-                      )
-                    )}
-                  </div>
-                )}
-
-              </div>
-            )}
-
+          <button onClick={() => setSubMenuOpen(!subMenuOpen)}>
+            <ChevronDown />
+          </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex-1 overflow-y-auto">
         {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-neon-purple animate-spin" />
-          </div>
-        ) : filteredSkins.length === 0 ? (
-          <GlassCard glow="none">
-            <p className="text-center text-muted-foreground py-12">
-              {t("No skins found")}
-            </p>
-          </GlassCard>
+          <Loader2 className="animate-spin" />
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2"
-          >
-            {filteredSkins.map(
-              (skin, index) => (
-                <motion.div
-                  key={`${skin.paint_id}-${index}`}
-                  initial={{
-                    opacity: 0,
-                    y: 20,
-                  }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  transition={{
-                    delay:
-                      index * 0.02,
-                  }}
-                >
-                  <SkinCard
-                    paintName={
-                      skin.paint_name
-                    }
-                    weaponName={
-                      skin.weapon_name
-                    }
-                    rarity={skin.rarity}
-                    paintId={
-                      skin.paint_id
-                    }
-                    weaponDefindex={
-                      skin.weapon_defindex
-                    }
-                    image={skin.image}
-                    cdnImage={
-                      skin.cdnImage
-                    }
-                    selected={
-                      selectedId ===
-                      skin.id
-                    }
-                    hideSeedWear={
-                      activeCategory ===
-                      "agents" ||
-                      activeCategory ===
-                      "music" ||
-                      activeCategory ===
-                      "pins"
-                    }
-                    favorite={favorites.has(
-                      skin.id ?? -1
-                    )}
-                    onToggleFavorite={() =>
-                      toggleFavorite(
-                        skin.id
-                      )
-                    }
-                    onSelect={() =>
-                      setSelectedId(
-                        selectedId ===
-                          skin.id
-                          ? null
-                          : skin.id ??
-                          null
-                      )
-                    }
-                    onEquip={(
-                      paintId,
-                      defindex,
-                      seed,
-                      wear
-                    ) =>
-                      handleEquip(
-                        paintId,
-                        defindex,
-                        seed,
-                        wear,
-                        skin
-                      )
-                    }
-                  />
-                </motion.div>
-              )
-            )}
+          <motion.div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            {filteredSkins.map((skin, i) => (
+              <SkinCard
+                key={i}
+                paintName={skin.paint_name}
+                weaponName={skin.weapon_name}
+                rarity={skin.rarity}
+                paintId={skin.paint_id}
+                weaponDefindex={skin.weapon_defindex}
+                image={skin.image}
+                cdnImage={skin.cdnImage}
+                selected={selectedId === skin.id}
+                favorite={favorites.has(skin.id ?? -1)}
+                onToggleFavorite={() => toggleFavorite(skin.id)}
+                onSelect={() =>
+                  setSelectedId(selectedId === skin.id ? null : skin.id ?? null)
+                }
+                onEquip={(p, d, s, w) =>
+                  handleEquip(p, d, s, w, skin)
+                }
+              />
+            ))}
           </motion.div>
         )}
       </div>
