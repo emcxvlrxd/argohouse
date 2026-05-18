@@ -64,8 +64,8 @@ export function WeaponBrowser() {
 
   const [loading, setLoading] = useState(true);
 
-  const [selectedSkin, setSelectedSkin] =
-    useState<SkinItem | null>(null);
+  const [selectedId, setSelectedId] =
+    useState<number | null>(null);
 
   const [equipping, setEquipping] = useState(false);
 
@@ -84,7 +84,7 @@ export function WeaponBrowser() {
   const fetchSkins = useCallback(async (category: string) => {
 
     setLoading(true);
-    setSelectedSkin(null);
+    setSelectedId(null);
     setSubFilter(null);
 
     try {
@@ -493,18 +493,12 @@ export function WeaponBrowser() {
                   weaponDefindex={skin.weapon_defindex}
                   image={skin.image}
                   cdnImage={skin.cdnImage}
-                  selected={
-                    selectedSkin?.paint_id === skin.paint_id &&
-                    selectedSkin?.weapon_defindex ===
-                    skin.weapon_defindex
-                  }
+                  selected={selectedId === skin.id}
                   onSelect={() =>
-                    setSelectedSkin(
-                      selectedSkin?.paint_id === skin.paint_id &&
-                        selectedSkin?.weapon_defindex ===
-                        skin.weapon_defindex
+                    setSelectedId(
+                      selectedId === skin.id
                         ? null
-                        : skin
+                        : skin.id ?? null
                     )
                   }
                   onEquip={(

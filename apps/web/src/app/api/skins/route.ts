@@ -56,16 +56,17 @@ export async function GET(req: NextRequest) {
     const steamid = (session.user as any).steamid;
 
     if (type === "knives") {
-      const all = loadJson("skins").map(normalizeSkin);
+      const all = loadJson("skins").map((s: any, i: number) => ({ ...normalizeSkin(s), id: i }));
       const knives = all.filter((s) => s.weapon_defindex >= 500);
       return NextResponse.json({ skins: await addCdnImage(knives) });
     }
 
     if (type === "gloves") {
-      const gloves = loadJson("gloves").map((g: any) => {
+      const gloves = loadJson("gloves").map((g: any, i: number) => {
         const paintName = g.paint_name || g.name || "Unknown Gloves";
         const gloveType = paintName.includes(" | ") ? paintName.split(" | ")[0].trim() : "Gloves";
         return {
+          id: i,
           ...g,
           paint_id: Number(g.paint) || 0,
           weapon_defindex: g.weapon_defindex || 0,
@@ -77,9 +78,10 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === "agents") {
-      const agents = loadJson("agents").map((a: any) => ({
+      const agents = loadJson("agents").map((a: any, i: number) => ({
+        id: i,
         paint_name: a.agent_name || a.name || "Unknown Agent",
-        weapon_name: a.team === 2 ? "T" : a.team === 3 ? "CT" : "Agent",
+        weapon_name: a.team === 2 ? "T Terrorist" : a.team === 3 ? "CT Counter-Terrorist" : "Agent",
         image: a.image || "",
         paint_id: a.team === 2 ? 2 : a.team === 3 ? 3 : 0,
         weapon_defindex: a.team === 2 ? 2 : a.team === 3 ? 3 : 0,
@@ -90,7 +92,8 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === "music") {
-      const music = loadJson("music").map((m: any) => ({
+      const music = loadJson("music").map((m: any, i: number) => ({
+        id: i,
         paint_name: m.name || "Unknown Music Kit",
         weapon_name: "Music Kit",
         image: m.image || "",
@@ -175,7 +178,7 @@ export async function GET(req: NextRequest) {
 
     const defindexes = WEAPON_CATEGORIES[type];
     if (defindexes) {
-      const all = loadJson("skins").map(normalizeSkin);
+      const all = loadJson("skins").map((s: any, i: number) => ({ ...normalizeSkin(s), id: i }));
       const result = all.filter((s) => defindexes.includes(s.weapon_defindex));
       return NextResponse.json({ skins: await addCdnImage(result) });
     }

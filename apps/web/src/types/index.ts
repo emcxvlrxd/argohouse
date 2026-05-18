@@ -31,6 +31,7 @@ export interface PlayerInfo {
 }
 
 export interface SkinItem {
+  id?: number;
   paint_id: number;
   paint_name: string;
   weapon_name: string;
