@@ -22,22 +22,26 @@ import {
   MessageCircle,
 } from "lucide-react";
 
+type AdminSidebarProps = {
+  webFlags?: string[];
+};
+
 const adminNavItems = [
-  { href: "/admin", label: "Dashboard", icon: Gauge, exact: true },
-  { href: "/admin/live", label: "Live Players", icon: Wifi },
-  { href: "/admin/server", label: "Server", icon: Server },
-  { href: "/admin/console", label: "Console", icon: Terminal },
-  { href: "/admin/rcon", label: "RCON", icon: Terminal },
-  { href: "/admin/players", label: "Players", icon: Users },
-  { href: "/admin/bans", label: "Bans", icon: Ban },
-  { href: "/admin/admins", label: "Admins", icon: UserCog },
-  { href: "/admin/complaints", label: "Complaints", icon: MessageCircle },
-  { href: "/admin/reports", label: "Reports", icon: Flag },
-  { href: "/admin/appeals", label: "Appeals", icon: AlertTriangle },
-  { href: "/admin/logs", label: "Logs", icon: ScrollText },
+  { href: "/admin", label: "Dashboard", icon: Gauge, exact: true, webKey: "web_dashboard" },
+  { href: "/admin/live", label: "Live Players", icon: Wifi, webKey: "web_live" },
+  { href: "/admin/server", label: "Server", icon: Server, webKey: "web_server" },
+  { href: "/admin/console", label: "Console", icon: Terminal, webKey: "web_console" },
+  { href: "/admin/rcon", label: "RCON", icon: Terminal, webKey: "web_rcon" },
+  { href: "/admin/players", label: "Players", icon: Users, webKey: "web_players" },
+  { href: "/admin/bans", label: "Bans", icon: Ban, webKey: "web_bans" },
+  { href: "/admin/admins", label: "Admins", icon: UserCog, webKey: "web_admins" },
+  { href: "/admin/complaints", label: "Complaints", icon: MessageCircle, webKey: "web_complaints" },
+  { href: "/admin/reports", label: "Reports", icon: Flag, webKey: "web_reports" },
+  { href: "/admin/appeals", label: "Appeals", icon: AlertTriangle, webKey: "web_appeals" },
+  { href: "/admin/logs", label: "Logs", icon: ScrollText, webKey: "web_logs" },
 ];
 
-export function AdminSidebar() {
+export function AdminSidebar({ webFlags }: AdminSidebarProps) {
   const pathname = usePathname();
 
   const isActive = (href: string, exact?: boolean) => {
@@ -58,7 +62,11 @@ export function AdminSidebar() {
       </div>
 
       <nav className="p-4 space-y-1 flex-1 overflow-y-auto">
-        {adminNavItems.map((item) => {
+        {adminNavItems.filter((item) => {
+          if (!webFlags || webFlags.length === 0) return false;
+          if (webFlags.includes("*")) return true;
+          return webFlags.includes(item.webKey);
+        }).map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, item.exact);
           return (

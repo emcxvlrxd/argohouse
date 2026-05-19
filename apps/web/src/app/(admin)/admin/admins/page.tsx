@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { t } from "@/lib/i18n";
-import { UserCog, Plus, Trash2, Search, X, Check, Sliders } from "lucide-react";
+import { UserCog, Plus, Trash2, Search, X, Check, Sliders, Globe } from "lucide-react";
 
 const flagGroups = [
   {
@@ -81,6 +82,22 @@ const flagGroups = [
 
 const allFlagKeys = flagGroups.flatMap((g) => g.flags.map((f) => f.key));
 
+const webFlagList = [
+  { key: "web_dashboard", icon: "📊", label: "Dashboard" },
+  { key: "web_live", icon: "📡", label: "Live Players" },
+  { key: "web_server", icon: "🖥", label: "Server" },
+  { key: "web_console", icon: "🖹", label: "Console" },
+  { key: "web_rcon", icon: "⌘", label: "RCON" },
+  { key: "web_players", icon: "👥", label: "Players" },
+  { key: "web_bans", icon: "⊘", label: "Bans" },
+  { key: "web_admins", icon: "♛", label: "Admins" },
+  { key: "web_complaints", icon: "💬", label: "Complaints" },
+  { key: "web_reports", icon: "⚑", label: "Reports" },
+  { key: "web_appeals", icon: "⚠", label: "Appeals" },
+  { key: "web_logs", icon: "◌", label: "Logs" },
+  { key: "web_webmanage", icon: "🔐", label: "Web Yetki Yönetimi" },
+];
+
 const flagColors: Record<string, string> = {
   root: "from-amber-500 to-yellow-500",
   ban: "from-red-500 to-rose-600",
@@ -116,7 +133,25 @@ const flagColors: Record<string, string> = {
   gravity: "from-indigo-400 to-violet-500",
 };
 
+function parseAdminFlags(raw: string | null): { flags: string[]; immunity: number; web: string[] } {
+  if (!raw) return { flags: [], immunity: 50, web: [] };
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return { flags: parsed, immunity: 50, web: [] };
+    const webRaw = parsed.web;
+    const web = Array.isArray(webRaw) ? webRaw : (webRaw === "*" ? ["*"] : []);
+    return { flags: parsed.flags || [], immunity: parsed.immunity || 50, web };
+  } catch {
+    return { flags: raw ? raw.split("").filter((c) => c !== " ") : [], immunity: 50, web: [] };
+  }
+}
+
 export default function AdminsPage() {
+  const { data: session } = useSession();
+  const currentUser = session?.user as any;
+  const currentFlags = parseAdminFlags(currentUser?.adminFlags);
+  const canManageWeb = currentFlags.web?.includes("web_webmanage") || currentUser?.role === "owner";
+
   const [admins, setAdmins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -125,7 +160,7 @@ export default function AdminsPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [form, setForm] = useState({ steamid64: "", name: "", flags: [] as string[], immunity: 50 });
+  const [form, setForm] = useState({ steamid64: "", name: "", flags: [] as string[], immunity: 50, webFlags: [] as string[] });
 
   const itemsPerPage = 10;
 
@@ -150,27 +185,17 @@ export default function AdminsPage() {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
   const openAdd = () => {
-    setForm({ steamid64: "", name: "", flags: [], immunity: 50 });
+    setForm({ steamid64: "", name: "", flags: [], immunity: 50, webFlags: [] });
     setEditingId(null);
     setShowModal(true);
   };
 
   const openEdit = (admin: any) => {
     const parsed = parseAdminFlags(admin.adminFlags);
-    setForm({ steamid64: admin.steamid64 || admin.steamid, name: admin.username || "", flags: parsed.flags, immunity: parsed.immunity });
+    const editWebFlags = parsed.web.includes("*") ? webFlagList.map((w) => w.key) : parsed.web || [];
+    setForm({ steamid64: admin.steamid64 || admin.steamid, name: admin.username || "", flags: parsed.flags, immunity: parsed.immunity, webFlags: editWebFlags });
     setEditingId(admin.id);
     setShowModal(true);
-  };
-
-  const parseAdminFlags = (raw: string | null): { flags: string[]; immunity: number } => {
-    if (!raw) return { flags: [], immunity: 50 };
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return { flags: parsed, immunity: 50 };
-      return { flags: parsed.flags || [], immunity: parsed.immunity || 50 };
-    } catch {
-      return { flags: raw ? raw.split("").filter((c) => c !== " ") : [], immunity: 50 };
-    }
   };
 
   const toggleFlag = (flagKey: string) => {
@@ -191,7 +216,8 @@ export default function AdminsPage() {
     e.preventDefault();
     if (!form.steamid64.trim()) return;
 
-    const flagsData = JSON.stringify({ flags: form.flags, immunity: form.immunity });
+    const savedWebFlags = form.webFlags.length === webFlagList.length ? "*" : form.webFlags;
+    const flagsData = JSON.stringify({ flags: form.flags, immunity: form.immunity, web: savedWebFlags });
 
     const res = await fetch("/api/admin/admins", {
       method: "POST",
@@ -214,6 +240,44 @@ export default function AdminsPage() {
     });
     setAdmins((prev) => prev.filter((a: any) => a.id !== id));
     setDeleteId(null);
+  };
+
+  const renderWebFlags = (web: string[]) => {
+    if (!web || web.length === 0) return <span className="text-[10px] text-muted-foreground">-</span>;
+    if (web.includes("*")) {
+      return <span className="rounded-md bg-gradient-to-r from-amber-500 to-yellow-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">All</span>;
+    }
+    const shown = web.slice(0, 2);
+    const remaining = web.slice(2);
+    return (
+      <div className="flex flex-wrap gap-1">
+        {shown.map((w) => {
+          const info = webFlagList.find((x) => x.key === w);
+          return (
+            <span key={w} className="rounded-md bg-gradient-to-r from-violet-500 to-cyan-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+              {info?.icon} {info?.label || w}
+            </span>
+          );
+        })}
+        {remaining.length > 0 && (
+          <div className="group relative">
+            <span className="cursor-default rounded-md bg-slate-800 px-2 py-0.5 text-[10px] font-bold text-slate-400">+{remaining.length}</span>
+            <div className="pointer-events-none absolute left-0 top-full z-50 mt-1.5 w-max rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 opacity-0 shadow-xl transition-opacity group-hover:opacity-100">
+              <div className="flex flex-wrap gap-1.5">
+                {remaining.map((w) => {
+                  const info = webFlagList.find((x) => x.key === w);
+                  return (
+                    <span key={w} className="rounded-md bg-gradient-to-r from-violet-500 to-cyan-500 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                      {info?.icon} {info?.label || w}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const renderFlags = (flags: string[]) => {
@@ -293,6 +357,7 @@ export default function AdminsPage() {
                   <th className="px-4 py-4">{t("Players")}</th>
                   <th className="px-4 py-4 hidden md:table-cell">{t("Flags")}</th>
                   <th className="px-4 py-4 hidden lg:table-cell">Immunity</th>
+                  <th className="px-4 py-4 hidden xl:table-cell">Web</th>
                   <th className="px-4 py-4 text-right">{t("Actions")}</th>
                 </tr>
               </thead>
@@ -328,6 +393,9 @@ export default function AdminsPage() {
                           </div>
                           <span className="text-xs font-semibold text-muted-foreground">{parsed.immunity}</span>
                         </div>
+                      </td>
+                      <td className="px-4 py-3 hidden xl:table-cell">
+                        {renderWebFlags(parsed.web)}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
@@ -452,6 +520,56 @@ export default function AdminsPage() {
                   <p className="mt-2 text-xs text-amber-400">Root flag seçildiğinde diğer flagler devre dışı kalır</p>
                 )}
               </div>
+
+              {/* Web Yetkileri (sadece root/web_webmanage yetkisi olan görebilir) */}
+              {canManageWeb && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5" /> Web Yetkileri
+                  </label>
+                  <div className="flex gap-2">
+                    <button type="button" className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300 hover:bg-cyan-500/20"
+                      onClick={() => setForm((prev) => ({ ...prev, webFlags: webFlagList.map((w) => w.key) }))}>
+                      All
+                    </button>
+                    <button type="button" className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1 text-xs font-bold text-slate-400 hover:bg-white/10"
+                      onClick={() => setForm((prev) => ({ ...prev, webFlags: [] }))}>
+                      Clear
+                    </button>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/5 bg-white/[0.02] p-3">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2.5">
+                    {webFlagList.map((wf) => {
+                      const isSelected = form.webFlags.includes(wf.key)
+                      return (
+                        <label key={wf.key} className="flex cursor-pointer items-center gap-1.5">
+                          <button
+                            type="button"
+                            className={`relative inline-flex h-4 w-7 shrink-0 rounded-full border transition ${isSelected ? "border-cyan-400 bg-cyan-500" : "border-slate-600 bg-slate-800"}`}
+                            onClick={() => setForm((prev) => ({
+                              ...prev,
+                              webFlags: prev.webFlags.includes(wf.key)
+                                ? prev.webFlags.filter((f) => f !== wf.key)
+                                : [...prev.webFlags, wf.key],
+                            }))}
+                          >
+                            <span className={`inline-block size-2.5 rounded-full bg-white transition-transform ${isSelected ? "translate-x-3.5" : "translate-x-0.5"}`} />
+                          </button>
+                          <span className={`text-[11px] font-semibold ${isSelected ? "text-white" : "text-slate-400"}`}>
+                            {wf.icon} {wf.label}
+                          </span>
+                        </label>
+                      )
+                    })}
+                  </div>
+                </div>
+                {form.webFlags.length === webFlagList.length && (
+                  <p className="mt-2 text-xs text-amber-400">Tüm web yetkileri verildi</p>
+                )}
+              </div>
+              )}
 
               <div className="flex gap-3">
                 <Button type="submit" className="flex-1 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white border-0">

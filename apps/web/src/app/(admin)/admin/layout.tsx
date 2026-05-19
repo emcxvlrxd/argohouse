@@ -17,14 +17,32 @@ export default function AdminLayout({
   const { data: session } = useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const currentUser = session?.user as any;
+  const currentRole = currentUser?.role;
+  let userWebFlags: string[] = ["*"];
+  if (currentRole === "owner") {
+    userWebFlags = ["*"];
+  } else if (currentUser?.adminFlags) {
+    try {
+      const parsed = JSON.parse(currentUser.adminFlags);
+      userWebFlags = parsed.web || [];
+    } catch {
+      userWebFlags = [];
+    }
+  }
+
   useEffect(() => {
     if (session?.user) {
       const role = (session.user as any).role;
       if (role !== "admin" && role !== "owner") {
         redirect("/dashboard");
       }
+      // owner değilse ve web yetkisi yoksa dashboard'a yönlendir
+      if (role !== "owner" && userWebFlags.length === 0) {
+        redirect("/dashboard");
+      }
     }
-  }, [session]);
+  }, [session, userWebFlags.length]);
 
   if (!session) {
     redirect("/");
@@ -37,7 +55,7 @@ export default function AdminLayout({
       <div className="fixed inset-0 bg-aurora pointer-events-none opacity-30" />
 
       <div className="flex">
-        <AdminSidebar />
+        <AdminSidebar webFlags={userWebFlags} />
 
         {/* Mobile sidebar */}
         {sidebarOpen && (
@@ -47,7 +65,7 @@ export default function AdminLayout({
               onClick={() => setSidebarOpen(false)}
             />
             <div className="fixed left-0 top-0 z-50 h-full w-64 bg-black/90 backdrop-blur-2xl border-r border-white/10 lg:hidden">
-              <AdminSidebar />
+              <AdminSidebar webFlags={userWebFlags} />
             </div>
           </>
         )}
