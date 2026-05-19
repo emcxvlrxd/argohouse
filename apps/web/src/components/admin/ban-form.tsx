@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -46,7 +47,7 @@ export function BanForm({ onBanCreated }: BanFormProps) {
         onBanCreated?.();
       }
     } catch {
-      setResult({ success: false, message: "Failed to create ban" });
+      setResult({ success: false, message: t("Failed to create ban") });
     } finally {
       setLoading(false);
     }
@@ -56,12 +57,12 @@ export function BanForm({ onBanCreated }: BanFormProps) {
     <GlassCard glow="none">
       <h3 className="font-semibold mb-4 flex items-center gap-2">
         <Ban className="w-4 h-4 text-red-400" />
-        Create Ban
+        {t("Create Ban")}
       </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            SteamID
+            {t("SteamID")}
           </label>
           <Input
             placeholder="STEAM_0:0:12345678"
@@ -72,27 +73,27 @@ export function BanForm({ onBanCreated }: BanFormProps) {
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Duration
+            {t("Duration")}
           </label>
           <Select value={duration} onValueChange={setDuration}>
             <SelectTrigger>
-              <SelectValue placeholder="Select duration" />
+              <SelectValue placeholder={t("Select duration")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0">Permanent</SelectItem>
-              <SelectItem value="1">1 Hour</SelectItem>
-              <SelectItem value="24">24 Hours</SelectItem>
-              <SelectItem value="168">7 Days</SelectItem>
-              <SelectItem value="720">30 Days</SelectItem>
+              <SelectItem value="0">{t("Permanent")}</SelectItem>
+              <SelectItem value="1">{t("1 Hour")}</SelectItem>
+              <SelectItem value="24">{t("24 Hours")}</SelectItem>
+              <SelectItem value="168">{t("7 Days")}</SelectItem>
+              <SelectItem value="720">{t("30 Days")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">
-            Reason
+            {t("Reason")}
           </label>
           <Input
-            placeholder="Cheating / Toxic behavior..."
+            placeholder={t("Cheating / Toxic behavior...")}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             required
@@ -100,11 +101,11 @@ export function BanForm({ onBanCreated }: BanFormProps) {
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading ? (
-            "Processing..."
+            t("Processing...")
           ) : (
             <>
               <AlertTriangle className="w-4 h-4 mr-2" />
-              Ban Player
+              {t("Ban Player")}
             </>
           )}
         </Button>

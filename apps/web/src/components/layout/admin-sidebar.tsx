@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 import { motion } from "framer-motion";
 import {
   Shield,
@@ -49,7 +50,7 @@ export function AdminSidebar() {
           <Shield className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h2 className="font-bold text-lg">Admin Panel</h2>
+          <h2 className="font-bold text-lg">{t("Admin Panel")}</h2>
           <p className="text-xs text-muted-foreground">FENA CS2</p>
         </div>
       </div>
@@ -77,7 +78,7 @@ export function AdminSidebar() {
                 />
               )}
               <Icon className="w-5 h-5 relative z-10" />
-              <span className="relative z-10">{item.label}</span>
+              <span className="relative z-10">{t(item.label)}</span>
               {active && (
                 <div className="absolute right-3 w-1.5 h-1.5 rounded-full bg-neon-cyan glow-cyan relative z-10" />
               )}
@@ -93,7 +94,7 @@ export function AdminSidebar() {
         >
           <ChevronLeft className="w-4 h-4" />
           <Crosshair className="w-4 h-4" />
-          Back to Site
+          {t("Back to Site")}
         </Link>
       </div>
     </aside>

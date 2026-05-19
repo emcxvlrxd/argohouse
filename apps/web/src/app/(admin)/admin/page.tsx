@@ -7,17 +7,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { AdminLogs } from "@/components/admin/admin-logs";
+import Link from "next/link";
 import {
-  Shield,
   Users,
   Palette,
   Ban,
   Terminal,
   Wifi,
   Server,
-  ExternalLink,
   Activity,
+  AlertCircle,
 } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 interface AdminStats {
   users: number;
@@ -29,6 +30,7 @@ interface AdminStats {
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [serverInfo, setServerInfo] = useState<any>(null);
+  const [rconError, setRconError] = useState("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -57,9 +59,14 @@ export default function AdminDashboardPage() {
             const p = line.match(/players\s*:\s*(\d+)/i);
             if (p) players = p[1];
           }
-          setServerInfo({ name, map, players, raw: serverData.output });
+          setServerInfo({ name, map, players });
+          setRconError("");
+        } else {
+          setRconError(serverData.error || t("Connection failed"));
         }
-      } catch {} finally {
+      } catch (e: any) {
+        setRconError(e.message || t("Connection failed"));
+      } finally {
         setLoading(false);
       }
     };
@@ -67,17 +74,17 @@ export default function AdminDashboardPage() {
   }, []);
 
   const statCards = [
-    { icon: Users, label: "Total Users", value: stats?.users || 0, color: "from-blue-500 to-indigo-600", link: "/admin/players" },
-    { icon: Palette, label: "Total Skins", value: stats?.skins || 0, color: "from-purple-500 to-violet-600" },
-    { icon: Ban, label: "Knives Set", value: stats?.knives || 0, color: "from-rose-500 to-pink-600" },
-    { icon: Terminal, label: "Gloves Set", value: stats?.gloves || 0, color: "from-cyan-500 to-teal-600" },
+    { icon: Users, label: t("Total Users"), value: stats?.users || 0, color: "from-blue-500 to-indigo-600" },
+    { icon: Palette, label: t("Total Skins"), value: stats?.skins || 0, color: "from-purple-500 to-violet-600" },
+    { icon: Ban, label: t("Knives") + " " + t("Set"), value: stats?.knives || 0, color: "from-rose-500 to-pink-600" },
+    { icon: Terminal, label: t("Gloves") + " " + t("Set"), value: stats?.gloves || 0, color: "from-cyan-500 to-teal-600" },
   ];
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold font-display">Admin Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Server management overview</p>
+        <h1 className="text-2xl font-bold font-display">{t("Admin Panel")}</h1>
+        <p className="text-sm text-muted-foreground">{t("Server management overview")}</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -110,32 +117,42 @@ export default function AdminDashboardPage() {
             })}
       </div>
 
-      {/* Server status */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
         <GlassCard glow="none">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Wifi className="w-4 h-4 text-green-400" />
-              <h3 className="font-semibold text-sm">Server Status</h3>
+              <Wifi className={`w-4 h-4 ${rconError ? "text-red-400" : "text-green-400"}`} />
+              <h3 className="font-semibold text-sm">{t("Server Status")}</h3>
             </div>
-            <Badge variant="purple" className="text-[10px]">Online</Badge>
+            <Badge variant={rconError ? "destructive" : "purple"} className="text-[10px]">
+              {rconError ? t("Offline") : t("Online")}
+            </Badge>
           </div>
           {loading ? (
             <Skeleton className="h-12" />
+          ) : rconError ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <AlertCircle className="w-3 h-3 text-red-400" />
+              {rconError}
+            </div>
           ) : (
             <div className="flex items-center gap-6 text-sm">
               <div><span className="text-muted-foreground text-xs">Host:</span> <span className="font-mono">{serverInfo?.name || "?"}</span></div>
-              <div><span className="text-muted-foreground text-xs">Map:</span> <span className="font-mono text-cyan-300">{serverInfo?.map || "?"}</span></div>
-              <div><span className="text-muted-foreground text-xs">Players:</span> <span className="font-mono">{serverInfo?.players || "?"}</span></div>
+              <div><span className="text-muted-foreground text-xs">{t("Map")}:</span> <span className="font-mono text-cyan-300">{serverInfo?.map || "?"}</span></div>
+              <div><span className="text-muted-foreground text-xs">{t("Players")}:</span> <span className="font-mono">{serverInfo?.players || "?"}</span></div>
             </div>
           )}
           <div className="flex gap-2 mt-3 pt-3 border-t border-white/10">
-            <Button variant="outline" size="sm" className="text-xs h-7" asChild>
-              <a href="/admin/live"><Activity className="w-3 h-3 mr-1" /> Live Players</a>
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs h-7" asChild>
-              <a href="/admin/server"><Server className="w-3 h-3 mr-1" /> Server Mgmt</a>
-            </Button>
+            <Link href="/admin/live">
+              <Button variant="outline" size="sm" className="text-xs h-7">
+                <Activity className="w-3 h-3 mr-1" /> {t("Live Players")}
+              </Button>
+            </Link>
+            <Link href="/admin/server">
+              <Button variant="outline" size="sm" className="text-xs h-7">
+                <Server className="w-3 h-3 mr-1" /> {t("Server")}
+              </Button>
+            </Link>
           </div>
         </GlassCard>
       </motion.div>

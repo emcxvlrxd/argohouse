@@ -8,7 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-import { UserCog, Shield, Plus, Trash2, Terminal } from "lucide-react";
+import { t } from "@/lib/i18n";
+import { UserCog, Shield, Plus, Trash2 } from "lucide-react";
 
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<any[]>([]);
@@ -43,21 +44,21 @@ export default function AdminsPage() {
       });
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || "Failed");
+        setError(data.error || t("Failed"));
       } else {
         setSteamid64("");
         setFlags("@@");
         await fetchAdmins();
       }
     } catch {
-      setError("Connection failed");
+      setError(t("Connection failed"));
     } finally {
       setAdding(false);
     }
   };
 
   const removeAdmin = async (steamid64: string) => {
-    if (!confirm("Remove this admin?")) return;
+    if (!confirm(t("Remove this admin?"))) return;
     try {
       await fetch("/api/admin/admins", {
         method: "DELETE",
@@ -73,33 +74,32 @@ export default function AdminsPage() {
       <div className="flex items-center gap-3">
         <UserCog className="w-6 h-6 text-cyan-400" />
         <div>
-          <h1 className="text-xl font-bold font-display">Admins</h1>
-          <p className="text-xs text-muted-foreground">CS2 server admin flags management</p>
+          <h1 className="text-xl font-bold font-display">{t("Admins")}</h1>
+          <p className="text-xs text-muted-foreground">{t("CS2 server admin flags management")}</p>
         </div>
       </div>
 
-      {/* Add form */}
       <GlassCard glow="none">
         <div className="flex items-center gap-2 mb-3">
           <Plus className="w-4 h-4 text-cyan-400" />
-          <h3 className="font-semibold text-sm">Add Admin</h3>
+          <h3 className="font-semibold text-sm">{t("Add Admin")}</h3>
         </div>
         <div className="flex flex-col sm:flex-row gap-3">
           <Input
-            placeholder="SteamID64 (7656...)"
+            placeholder={t("SteamID64 (7656...)")}
             value={steamid64}
             onChange={(e) => setSteamid64(e.target.value)}
             className="font-mono text-xs"
           />
           <div className="flex gap-2">
             <Input
-              placeholder="Flags"
+              placeholder={t("Flags")}
               value={flags}
               onChange={(e) => setFlags(e.target.value)}
               className="font-mono text-xs w-24"
             />
             <Button onClick={addAdmin} disabled={!steamid64.trim() || adding}>
-              {adding ? "Adding..." : "Add"}
+              {adding ? t("Adding...") : t("Add")}
             </Button>
           </div>
         </div>
@@ -109,14 +109,13 @@ export default function AdminsPage() {
         </div>
       </GlassCard>
 
-      {/* Admin list */}
       <GlassCard glow="none">
         {loading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
           </div>
         ) : admins.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8 text-sm">No admins found</p>
+          <p className="text-center text-muted-foreground py-8 text-sm">{t("No admins found")}</p>
         ) : (
           <div className="space-y-2">
             {admins.map((admin: any, i: number) => (
@@ -137,7 +136,7 @@ export default function AdminsPage() {
                   )}
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{admin.username || "Unknown"}</p>
+                  <p className="text-sm font-medium truncate">{admin.username || t("Unknown")}</p>
                   <p className="text-xs text-muted-foreground font-mono truncate">{admin.steamid64 || admin.steamid}</p>
                 </div>
                 <Badge variant={admin.role === "owner" ? "warning" : "purple"} className="text-[10px]">

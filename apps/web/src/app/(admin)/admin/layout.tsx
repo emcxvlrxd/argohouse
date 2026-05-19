@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { useState, useEffect } from "react";
 import { AdminSidebar } from "@/components/layout/admin-sidebar";
+import { t } from "@/lib/i18n";
 import { Shield, Menu, Crosshair } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -64,12 +65,12 @@ export default function AdminLayout({
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-purple-600 flex items-center justify-center">
                   <Shield className="w-4 h-4 text-white" />
                 </div>
-                <h2 className="font-bold">Admin Panel</h2>
+                <h2 className="font-bold">{t("Admin Panel")}</h2>
               </div>
               <Link href="/dashboard">
                 <Button variant="ghost" size="sm">
                   <Crosshair className="w-4 h-4 mr-1" />
-                  Back to Site
+                  {t("Back to Site")}
                 </Button>
               </Link>
             </div>

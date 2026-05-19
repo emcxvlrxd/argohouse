@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { ScrollText, Shield, Ban, UserCog, Flag } from "lucide-react";
+import { t } from "@/lib/i18n";
 import { AdminLogEntry } from "@/types";
 
 const actionColors: Record<string, string> = {
@@ -43,8 +44,8 @@ export function AdminLogs() {
           <ScrollText className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="font-semibold">Admin Logs</h3>
-          <p className="text-xs text-muted-foreground">Recent actions</p>
+          <h3 className="font-semibold">{t("Admin Logs")}</h3>
+          <p className="text-xs text-muted-foreground">{t("Recent actions")}</p>
         </div>
         <Badge variant="purple" className="ml-auto">
           {logs.length}
@@ -58,7 +59,7 @@ export function AdminLogs() {
           ))}
         </div>
       ) : logs.length === 0 ? (
-        <p className="text-center text-muted-foreground py-8">No logs yet</p>
+        <p className="text-center text-muted-foreground py-8">{t("No logs yet")}</p>
       ) : (
         <div className="space-y-1">
           {logs.slice(0, 20).map((log, index) => {

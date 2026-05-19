@@ -1,4 +1,5 @@
 export const tr: Record<string, string> = {
+  // Navigation
   "Dashboard": "Panel",
   "Players": "Oyuncular",
   "Leaderboard": "Liderlik Tablosu",
@@ -27,6 +28,7 @@ export const tr: Record<string, string> = {
   "Search players...": "Oyuncu ara...",
   "No players found": "Oyuncu bulunamadı",
   "total players": "toplam oyuncu",
+  "players": "oyuncu",
   "Get Started": "Başla",
   "Learn More": "Daha Fazla",
   "Welcome to": "Hoş Geldiniz",
@@ -95,6 +97,7 @@ export const tr: Record<string, string> = {
   "Your Message": "Mesajınız",
   "Explain your situation and why the penalty should be lifted...": "Durumunuzu ve cezanın neden kaldırılması gerektiğini açıklayın...",
   "Submit Appeal": "İtiraz Gönder",
+  "No appeals": "İtiraz yok",
   "No appeals submitted yet": "Henüz itiraz gönderilmemiş",
   "Server Status": "Sunucu Durumu",
   "Map": "Harita",
@@ -135,8 +138,118 @@ export const tr: Record<string, string> = {
   "StatTrak": "StatTrak",
   "Blue Gem": "Mavi Desen",
   "Seed markers": "Seed işaretleri",
-  "Açık": "Açık",
-  "Kapalı": "Kapalı",
+  "Set": "Sayısı",
+
+  // Admin navigation
+  "Live Players": "Canlı Oyuncular",
+  "Server Mgmt": "Sunucu Yönetimi",
+  "Console": "Konsol",
+  "RCON": "RCON",
+  "Bans": "Yasaklamalar",
+  "Admins": "Yöneticiler",
+  "Logs": "Kayıtlar",
+  "Reports": "Raporlar",
+  "Back to Site": "Siteye Dön",
+
+  // Admin dashboard
+  "Server management overview": "Sunucu yönetimine genel bakış",
+  "Total Users": "Toplam Kullanıcı",
+  "Total Skins": "Toplam Kaplama",
+  "Knives Set": "Bıçak Sayısı",
+  "Gloves Set": "Eldiven Sayısı",
+  "Host": "Sunucu",
+
+  // Server management
+  "RCON commands, map changes, broadcast": "RCON komutları, harita değişiklikleri, duyuru",
+  "Quick Map Change": "Hızlı Harita Değiş",
+  "Broadcast": "Duyuru",
+  "Message...": "Mesaj...",
+  "Actions": "İşlemler",
+  "Restart Round": "Round'u Yeniden Başlat",
+  "Restart Match": "Maçı Yeniden Başlat",
+  "Enter command...": "Komut gir...",
+  "Quick Commands": "Hızlı Komutlar",
+  "Kick Bots": "Botları At",
+  "End Warmup": "Isınmayı Bitir",
+  "Say Hello": "Merhaba De",
+  "Reload Skins": "Kaplamaları Yenile",
+
+  // Live players
+  "Refresh": "Yenile",
+  "No players online": "Çevrimiçi oyuncu yok",
+  "Kick": "At",
+  "Ban": "Yasakla",
+
+  // RCON page
+  "RCON Control": "RCON Kontrol",
+  "Send server commands": "Sunucu komutları gönder",
+  "RCON Console": "RCON Konsolu",
+  "Live server terminal": "Canlı sunucu terminali",
+  "Clear": "Temizle",
+  "Type a command to start": "Başlamak için komut yazın",
+  "Use arrow keys for command history": "Yön tuşları ile komut geçmişi",
+  "Executing...": "Yürütülüyor...",
+  "Enter server command...": "Sunucu komutu gir...",
+  "Send": "Gönder",
+
+  // Players admin
+  "Player Management": "Oyuncu Yönetimi",
+  "View and manage players": "Oyuncuları görüntüle ve yönet",
+  "View Equipment": "Ekipmanı Gör",
+  "Loading equipment...": "Ekipman yükleniyor...",
+
+  // Admins page
+  "CS2 server admin flags management": "CS2 sunucu yönetici flag yönetimi",
+  "Add Admin": "Yönetici Ekle",
+  "SteamID64 (7656...)": "SteamID64 (7656...)",
+  "Flags": "Flagler",
+  "Add": "Ekle",
+  "Adding...": "Ekleniyor...",
+  "Remove this admin?": "Bu yöneticiyi kaldır?",
+  "No admins found": "Yönetici bulunamadı",
+  "Connection failed": "Bağlantı başarısız",
+  "Failed": "Başarısız",
+
+  // Bans
+  "Manage player bans": "Oyuncu yasaklarını yönet",
+  "Active Bans": "Aktif Yasaklamalar",
+  "No active bans": "Aktif yasak yok",
+  "Permanent": "Kalıcı",
+  "Create Ban": "Yasak Oluştur",
+  "SteamID": "SteamID",
+  "Duration": "Süre",
+  "Select duration": "Süre seç",
+  "1 Hour": "1 Saat",
+  "24 Hours": "24 Saat",
+  "7 Days": "7 Gün",
+  "30 Days": "30 Gün",
+  "Reason": "Sebep",
+  "Cheating / Toxic behavior...": "Hile / Toksik davranış...",
+  "Processing...": "İşleniyor...",
+  "Ban Player": "Oyuncuyu Yasakla",
+  "Failed to create ban": "Yasak oluşturulamadı",
+
+  // Logs
+  "Admin Logs": "Yönetici Kayıtları",
+  "Recent actions": "Son işlemler",
+  "Complete action history": "Tüm işlem geçmişi",
+  "No logs yet": "Henüz kayıt yok",
+
+  // Admin subpages  
+  "Server Console": "Sunucu Konsolu",
+  "Real-time RCON terminal": "Gerçek zamanlı RCON terminali",
+  "Player reports management": "Oyuncu rapor yönetimi",
+  "No reports pending review": "Bekleyen rapor yok",
+  "Appeals Management": "İtiraz Yönetimi",
+  "Review and process appeals": "İtirazları incele ve işle",
+  "Approve": "Onayla",
+  "Deny": "Reddet",
+
+  // Ban form
+  "just now": "şimdi",
+  "m ago": "dk önce",
+  "h ago": "s önce",
+  "d ago": "g önce",
 };
 
 export function t(key: string): string {

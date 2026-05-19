@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,14 +39,14 @@ export default function ServerPage() {
       <div className="flex items-center gap-3">
         <Terminal className="w-6 h-6 text-cyan-400" />
         <div>
-          <h1 className="text-xl font-bold font-display">Server Management</h1>
-          <p className="text-xs text-muted-foreground">RCON commands, map changes, broadcast</p>
+          <h1 className="text-xl font-bold font-display">{t("Server Mgmt")}</h1>
+          <p className="text-xs text-muted-foreground">{t("RCON commands, map changes, broadcast")}</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <GlassCard glow="none" className="lg:col-span-1">
-          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Map className="w-4 h-4 text-cyan-400" /> Quick Map Change</h3>
+          <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><Map className="w-4 h-4 text-cyan-400" /> {t("Quick Map Change")}</h3>
           <div className="grid grid-cols-2 gap-2">
             {quickMaps.map((m) => (
               <Button key={m} variant="outline" size="sm" className="text-xs font-mono h-8" onClick={() => sendCommand(`changelevel ${m}`)} disabled={loading}>
@@ -54,9 +55,9 @@ export default function ServerPage() {
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-white/10">
-            <h3 className="text-sm font-semibold mb-2">Broadcast</h3>
+            <h3 className="text-sm font-semibold mb-2">{t("Broadcast")}</h3>
             <div className="flex gap-2">
-              <Input placeholder="Message..." className="text-xs h-8" id="broadcast-input"
+              <Input placeholder={t("Message...")} className="text-xs h-8" id="broadcast-input"
                 onKeyDown={(e) => { if (e.key === "Enter") sendCommand(`say ${(document.getElementById("broadcast-input") as HTMLInputElement)?.value}`); }}
               />
               <Button variant="outline" size="sm" className="h-8" onClick={() => sendCommand(`say ${(document.getElementById("broadcast-input") as HTMLInputElement)?.value}`)} disabled={loading}>
@@ -65,24 +66,24 @@ export default function ServerPage() {
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
-            <h3 className="text-sm font-semibold mb-2">Actions</h3>
+            <h3 className="text-sm font-semibold mb-2">{t("Actions")}</h3>
             <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => sendCommand("sv_restart 1")} disabled={loading}>
-              <RotateCcw className="w-3 h-3 mr-1" /> Restart Round
+              <RotateCcw className="w-3 h-3 mr-1" /> {t("Restart Round")}
             </Button>
             <Button variant="outline" size="sm" className="w-full text-xs" onClick={() => sendCommand("mp_restartgame 5")} disabled={loading}>
-              <RefreshCw className="w-3 h-3 mr-1" /> Restart Match
+              <RefreshCw className="w-3 h-3 mr-1" /> {t("Restart Match")}
             </Button>
           </div>
         </GlassCard>
 
         <GlassCard glow="none" className="lg:col-span-2">
-          <h3 className="text-sm font-semibold mb-3">Console</h3>
+          <h3 className="text-sm font-semibold mb-3">{t("Console")}</h3>
           <div className="flex gap-2 mb-3">
             <Input
               value={command}
               onChange={(e) => setCommand(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") sendCommand(); }}
-              placeholder="Enter command..."
+              placeholder={t("Enter command...")}
               className="text-xs h-8"
               disabled={loading}
             />

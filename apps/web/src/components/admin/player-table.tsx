@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n";
 import { User, Search, Shield, Eye, Ban } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -114,7 +115,7 @@ export function PlayerTable() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search players..."
+                placeholder={t("Search players...")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-9"
@@ -122,7 +123,7 @@ export function PlayerTable() {
             </div>
           </div>
           <Badge variant="purple" className="text-xs">
-            {filteredPlayers.length} players
+            {filteredPlayers.length} {t("players")}
           </Badge>
         </div>
 
@@ -152,7 +153,7 @@ export function PlayerTable() {
                   )}
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{player.username || "Unknown"}</p>
+                  <p className="text-sm font-medium truncate">{player.username || t("Unknown")}</p>
                   <p className="text-xs text-muted-foreground font-mono truncate">{player.steamid64 || player.steamid}</p>
                 </div>
 
@@ -181,7 +182,7 @@ export function PlayerTable() {
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => viewEquipment(player)} title="View Equipment">
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => viewEquipment(player)} title={t("View Equipment")}>
                     <Eye className="w-3.5 h-3.5" />
                   </Button>
                   <Button
@@ -189,7 +190,7 @@ export function PlayerTable() {
                     size="sm"
                     className={cn("h-7 w-7 p-0", player.isBanned ? "text-red-400" : "text-muted-foreground")}
                     onClick={() => toggleBan(player.steamid64, player.isBanned)}
-                    title={player.isBanned ? "Unban" : "Ban"}
+                    title={player.isBanned ? "Unban" : t("Ban")}
                   >
                     <Ban className="w-3.5 h-3.5" />
                   </Button>
@@ -198,7 +199,7 @@ export function PlayerTable() {
               </motion.div>
             ))}
             {filteredPlayers.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">No players found</p>
+              <p className="text-center text-muted-foreground py-8">{t("No players found")}</p>
             )}
           </div>
         )}
@@ -218,7 +219,7 @@ export function PlayerTable() {
                 )}
               </Avatar>
               <div>
-                <h3 className="font-semibold">{selectedPlayer.username || "Unknown"}</h3>
+                <h3 className="font-semibold">{selectedPlayer.username || t("Unknown")}</h3>
                 <p className="text-xs text-muted-foreground font-mono">{selectedPlayer.steamid64 || selectedPlayer.steamid}</p>
               </div>
               <Button variant="ghost" size="sm" className="ml-auto h-7 w-7 p-0" onClick={() => setSelectedPlayer(null)}>×</Button>
@@ -226,11 +227,11 @@ export function PlayerTable() {
             {equipment ? (
               <div className="grid grid-cols-3 gap-3 text-center">
                 {[
-                  { label: "Skins", value: equipment.equipment?.skins || 0, color: "text-cyan-400" },
-                  { label: "Knives", value: equipment.equipment?.knife || 0, color: "text-purple-400" },
-                  { label: "Gloves", value: equipment.equipment?.gloves || 0, color: "text-yellow-400" },
-                  { label: "Agents", value: equipment.equipment?.agents || 0, color: "text-green-400" },
-                  { label: "Music", value: equipment.equipment?.music || 0, color: "text-pink-400" },
+                  { label: t("Skins"), value: equipment.equipment?.skins || 0, color: "text-cyan-400" },
+                  { label: t("Knives"), value: equipment.equipment?.knife || 0, color: "text-purple-400" },
+                  { label: t("Gloves"), value: equipment.equipment?.gloves || 0, color: "text-yellow-400" },
+                  { label: t("Agents"), value: equipment.equipment?.agents || 0, color: "text-green-400" },
+                  { label: t("Music"), value: equipment.equipment?.music || 0, color: "text-pink-400" },
                 ].map((item) => (
                   <div key={item.label} className="p-3 rounded-xl bg-white/5">
                     <p className={cn("text-lg font-bold font-display", item.color)}>{item.value}</p>
@@ -239,7 +240,7 @@ export function PlayerTable() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-8 text-sm">Loading equipment...</p>
+              <p className="text-center text-muted-foreground py-8 text-sm">{t("Loading equipment...")}</p>
             )}
           </GlassCard>
           </div>

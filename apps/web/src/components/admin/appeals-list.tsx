@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { t } from "@/lib/i18n";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -82,14 +83,14 @@ export function AppealsList() {
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
           <AlertTriangle className="w-5 h-5 text-white" />
         </div>
-        <h3 className="font-semibold">Appeals</h3>
+        <h3 className="font-semibold">{t("Appeals")}</h3>
         <Badge variant="warning" className="ml-auto">
-          {appeals.filter((a) => a.status === "pending").length} pending
+          {appeals.filter((a) => a.status === "pending").length} bekleyen
         </Badge>
       </div>
 
       {appeals.length === 0 ? (
-        <p className="text-center text-muted-foreground py-8">No appeals</p>
+        <p className="text-center text-muted-foreground py-8">{t("No appeals")}</p>
       ) : (
         <div className="space-y-3">
           {appeals.map((appeal, index) => (
@@ -125,7 +126,7 @@ export function AppealsList() {
                     onClick={() => handleAction(appeal.id, "approve")}
                   >
                     <Check className="w-3 h-3 mr-1" />
-                    Approve
+                    {t("Approve")}
                   </Button>
                   <Button
                     size="sm"
@@ -133,7 +134,7 @@ export function AppealsList() {
                     onClick={() => handleAction(appeal.id, "deny")}
                   >
                     <X className="w-3 h-3 mr-1" />
-                    Deny
+                    {t("Deny")}
                   </Button>
                 </div>
               )}

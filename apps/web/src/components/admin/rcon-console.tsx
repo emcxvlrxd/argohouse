@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { t } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -107,8 +108,8 @@ export function RconConsole() {
             <Terminal className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-sm">RCON Console</h3>
-            <p className="text-[10px] text-muted-foreground">Live server terminal</p>
+            <h3 className="font-semibold text-sm">{t("RCON Console")}</h3>
+            <p className="text-[10px] text-muted-foreground">{t("Live server terminal")}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -118,8 +119,7 @@ export function RconConsole() {
             onClick={() => setCommands([])}
             className="text-xs"
           >
-            <Trash2 className="w-3 h-3 mr-1" />
-            Clear
+            {t("Clear")}
           </Button>
         </div>
       </div>
@@ -131,8 +131,8 @@ export function RconConsole() {
         {commands.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <Terminal className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p>Type a command to start</p>
-            <p className="text-[10px]">Use arrow keys for command history</p>
+            <p>{t("Type a command to start")}</p>
+            <p className="text-[10px]">{t("Use arrow keys for command history")}</p>
           </div>
         )}
         <AnimatePresence>
@@ -160,7 +160,7 @@ export function RconConsole() {
         {executing && (
           <div className="flex items-center gap-2 text-muted-foreground">
             <span className="animate-pulse">&gt;</span>
-            <span>Executing...</span>
+            <span>{t("Executing...")}</span>
           </div>
         )}
       </div>
@@ -172,7 +172,7 @@ export function RconConsole() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Enter server command..."
+          placeholder={t("Enter server command...")}
           className="font-mono text-sm"
           disabled={executing}
         />
@@ -182,7 +182,7 @@ export function RconConsole() {
           size="sm"
         >
           <Send className="w-4 h-4 mr-1" />
-          Send
+          {t("Send")}
         </Button>
       </div>
     </GlassCard>

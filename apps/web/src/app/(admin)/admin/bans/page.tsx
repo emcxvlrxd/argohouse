@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { t } from "@/lib/i18n";
 import { GlassCard } from "@/components/ui/glass-card";
 import { BanForm } from "@/components/admin/ban-form";
 import { Badge } from "@/components/ui/badge";
@@ -40,8 +41,8 @@ export default function BansPage() {
       <div className="flex items-center gap-3 mb-6">
         <Ban className="w-8 h-8 text-red-400" />
         <div>
-          <h1 className="text-2xl font-bold font-display">Bans</h1>
-          <p className="text-sm text-muted-foreground">Manage player bans</p>
+          <h1 className="text-2xl font-bold font-display">{t("Bans")}</h1>
+          <p className="text-sm text-muted-foreground">{t("Manage player bans")}</p>
         </div>
       </div>
 
@@ -49,7 +50,7 @@ export default function BansPage() {
         <div className="lg:col-span-2">
           <GlassCard glow="none">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Active Bans ({bans.length})</h3>
+              <h3 className="font-semibold">{t("Active Bans")} ({bans.length})</h3>
             </div>
             {loading ? (
               <div className="space-y-2">
@@ -58,7 +59,7 @@ export default function BansPage() {
                 ))}
               </div>
             ) : bans.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">No active bans</p>
+              <p className="text-center text-muted-foreground py-8">{t("No active bans")}</p>
             ) : (
               <div className="space-y-2">
                 {bans.map((ban, i) => (
@@ -77,11 +78,11 @@ export default function BansPage() {
                         {ban.username || ban.steamid}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {ban.banReason} {ban.banExpires ? `- Expires: ${new Date(ban.banExpires).toLocaleDateString()}` : "- Permanent"}
+                        {ban.banReason} {ban.banExpires ? `- Bitiş: ${new Date(ban.banExpires).toLocaleDateString()}` : `- ${t("Permanent")}`}
                       </p>
                     </div>
                     <Badge variant="destructive" className="text-[10px]">
-                      Banned
+                      {t("Banned")}
                     </Badge>
                   </motion.div>
                 ))}

@@ -5,16 +5,17 @@ import { GlassCard } from "@/components/ui/glass-card";
 import { Terminal, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { t } from "@/lib/i18n";
 
 const quickCommands = [
   { label: "Status", cmd: "status" },
   { label: "Players", cmd: "listplayers" },
-  { label: "Restart Round", cmd: "mp_restartgame 1" },
-  { label: "Kick Bots", cmd: "bot_kick" },
-  { label: "Restart Match", cmd: "mp_restartgame 5" },
-  { label: "End Warmup", cmd: "mp_warmup_end" },
-  { label: "Say Hello", cmd: `say "Welcome to FENA CS2!"` },
-  { label: "Reload Skins", cmd: "wp_reload" },
+  { label: t("Restart Round"), cmd: "mp_restartgame 1" },
+  { label: t("Kick Bots"), cmd: "bot_kick" },
+  { label: t("Restart Match"), cmd: "mp_restartgame 5" },
+  { label: t("End Warmup"), cmd: "mp_warmup_end" },
+  { label: t("Say Hello"), cmd: `say "FENA CS2'ye Hoş Geldiniz!"` },
+  { label: t("Reload Skins"), cmd: "wp_reload" },
 ];
 
 export default function RconPage() {
@@ -38,8 +39,8 @@ export default function RconPage() {
       <div className="flex items-center gap-3 mb-6">
         <Terminal className="w-8 h-8 text-neon-cyan" />
         <div>
-          <h1 className="text-2xl font-bold font-display">RCON Control</h1>
-          <p className="text-sm text-muted-foreground">Send server commands</p>
+          <h1 className="text-2xl font-bold font-display">{t("RCON Control")}</h1>
+          <p className="text-sm text-muted-foreground">{t("Send server commands")}</p>
         </div>
       </div>
 
@@ -51,7 +52,7 @@ export default function RconPage() {
           <GlassCard glow="none">
             <div className="flex items-center gap-2 mb-3">
               <Terminal className="w-4 h-4 text-muted-foreground" />
-              <h3 className="font-semibold text-sm">Quick Commands</h3>
+              <h3 className="font-semibold text-sm">{t("Quick Commands")}</h3>
             </div>
             <div className="space-y-2">
               {quickCommands.map((q) => (
