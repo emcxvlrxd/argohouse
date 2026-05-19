@@ -52,11 +52,11 @@ export default function AdminDashboardPage() {
           const lines = serverData.output.split("\n");
           let map = "N/A", name = "FENA CS2", players = "0";
           for (const line of lines) {
-            const m = line.match(/map\s*:\s*(\S+)/i);
+            const m = line.match(/map[:\s]+(\S+)/i);
             if (m) map = m[1];
-            const h = line.match(/hostname\s*:\s*(.+)/i);
-            if (h) name = h[1];
-            const p = line.match(/players\s*:\s*(\d+)/i);
+            const h = line.match(/hostname[:\s]+(.+)/i);
+            if (h) name = h[1].trim();
+            const p = line.match(/players[:\s]+(\d+)/i);
             if (p) players = p[1];
           }
           setServerInfo({ name, map, players });
