@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { GlassCard } from "@/components/ui/glass-card";
 import { Input } from "@/components/ui/input";
 import { CategoryNav } from "./category-nav";
 import { SkinCard } from "./skin-card";
-import { SkinItem, PlayerEquipment } from "@/types";
+import { SkinPreview } from "./skin-preview";
+import { EquippedPanel } from "./equipped-panel";
+import { SkinItem } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
@@ -105,9 +106,8 @@ export function WeaponBrowser() {
   const [activeCategory, setActiveCategory] = useState("knives");
   const [search, setSearch] = useState("");
   const [skins, setSkins] = useState<SkinItem[]>([]);
-  const [equipment, setEquipment] = useState<PlayerEquipment | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedSkin, setSelectedSkin] = useState<SkinItem | null>(null);
   const [equipping, setEquipping] = useState(false);
   const [equipMsg, setEquipMsg] = useState("");
   const [subFilter, setSubFilter] = useState<number | null>(null);
@@ -115,7 +115,6 @@ export function WeaponBrowser() {
   const [favorites, setFavorites] = useState<Set<number>>(loadFavorites);
   const [showFavorites, setShowFavorites] = useState(false);
 
-  // Agent için CT/T seçimi — 3 = CT, 2 = T
   const [agentTeam, setAgentTeam] = useState<2 | 3>(3);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -142,7 +141,7 @@ export function WeaponBrowser() {
 
   const fetchSkins = useCallback(async (category: string) => {
     setLoading(true);
-    setSelectedId(null);
+    setSelectedSkin(null);
     setSubFilter(null);
 
     try {
@@ -159,14 +158,6 @@ export function WeaponBrowser() {
   useEffect(() => {
     fetchSkins(activeCategory);
   }, [activeCategory]);
-
-  useEffect(() => {
-    (async () => {
-      const res = await fetch("/api/skins?type=equipped");
-      const data = await res.json();
-      setEquipment(data);
-    })();
-  }, []);
 
   const weaponTypes = useMemo(() => {
     const map = new Map<number, string>();
@@ -232,7 +223,6 @@ export function WeaponBrowser() {
           },
         };
       } else if (activeCategory === "agents") {
-        // agentTeam state'inden alıyoruz — skin.team'e güvenmiyoruz
         payload = {
           type: "agent",
           data: {
@@ -305,9 +295,8 @@ export function WeaponBrowser() {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Üst: arama + kategori + filtre */}
       <div className="flex-shrink-0 pt-1 pb-2">
-
-        {/* Üst satır: arama + favori + agent CT/T toggle + mesaj */}
         <div className="flex items-center gap-2 mb-2">
           <div className="relative flex-1 max-w-xs">
             <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
@@ -331,7 +320,6 @@ export function WeaponBrowser() {
             <Heart className="w-4 h-4" />
           </button>
 
-          {/* Agent kategorisindeyken CT/T toggle göster */}
           {activeCategory === "agents" && (
             <div className="flex items-center gap-1">
               <button
@@ -367,7 +355,6 @@ export function WeaponBrowser() {
           )}
         </div>
 
-        {/* Alt satır: kategori nav + filtre dropdown */}
         <div className="flex items-center gap-2">
           <CategoryNav
             active={activeCategory}
@@ -377,7 +364,6 @@ export function WeaponBrowser() {
             }}
           />
 
-          {/* Filtre dropdown */}
           {currentSubOptions.length > 0 && (
             <div className="relative ml-auto" ref={dropdownRef}>
               <button
@@ -459,44 +445,61 @@ export function WeaponBrowser() {
         </div>
       </div>
 
-      {/* Skin listesi */}
-      <div className="flex-1 overflow-y-auto">
-        {loading ? (
-          <div className="flex items-center justify-center h-32">
-            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-          </div>
-        ) : filteredSkins.length === 0 ? (
-          <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
-            Sonuç bulunamadı
-          </div>
-        ) : (
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-5 gap-2"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.2 }}
-          >
-            {filteredSkins.map((skin, i) => (
-              <SkinCard
-                key={i}
-                paintName={skin.paint_name}
-                weaponName={skin.weapon_name}
-                rarity={skin.rarity}
-                paintId={skin.paint_id}
-                weaponDefindex={skin.weapon_defindex}
-                image={skin.image}
-                cdnImage={skin.cdnImage}
-                selected={selectedId === skin.id}
-                favorite={favorites.has(skin.id ?? -1)}
-                onToggleFavorite={() => toggleFavorite(skin.id)}
-                onSelect={() =>
-                  setSelectedId(selectedId === skin.id ? null : skin.id ?? null)
-                }
-                onEquip={(p, d, s, w, extra) => handleEquip(p, d, s, w, skin, extra?.stattrak, extra?.nametag, extra?.team)}
-              />
-            ))}
-          </motion.div>
-        )}
+      {/* Alt: skin grid (sol) + preview/equipped (sağ) */}
+      <div className="flex-1 flex gap-4 min-h-0">
+        <div className="flex-1 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredSkins.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-xs text-muted-foreground">
+              Sonuç bulunamadı
+            </div>
+          ) : (
+            <motion.div
+              className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              {filteredSkins.map((skin, i) => (
+                <SkinCard
+                  key={i}
+                  paintName={skin.paint_name}
+                  rarity={skin.rarity}
+                  paintId={skin.paint_id}
+                  weaponDefindex={skin.weapon_defindex}
+                  image={skin.image}
+                  cdnImage={skin.cdnImage}
+                  selected={selectedSkin?.id === skin.id}
+                  favorite={favorites.has(skin.id ?? -1)}
+                  onToggleFavorite={() => toggleFavorite(skin.id)}
+                  onSelect={() =>
+                    setSelectedSkin(
+                      selectedSkin?.id === skin.id ? null : skin
+                    )
+                  }
+                />
+              ))}
+            </motion.div>
+          )}
+        </div>
+
+        {/* Sağ panel: seçili skin varsa preview, yoksa equipped */}
+        <div className="w-72 lg:w-80 shrink-0 overflow-y-auto hidden md:block">
+          {selectedSkin ? (
+            <SkinPreview
+              skin={selectedSkin}
+              onClose={() => setSelectedSkin(null)}
+              onEquip={(p, d, s, w, extra) =>
+                handleEquip(p, d, s, w, selectedSkin, extra?.stattrak, extra?.nametag, extra?.team)
+              }
+            />
+          ) : (
+            <EquippedPanel />
+          )}
+        </div>
       </div>
     </div>
   );
