@@ -223,11 +223,6 @@ export async function POST(
         const stattrak = data?.stattrak === true;
         const teams = data?.team ? [toNum(data?.team)] : [2, 3];
 
-        await prisma.$executeRaw`
-          DELETE FROM wp_player_knife
-          WHERE steamid = ${steamid}
-        `;
-
         for (const t of teams) {
 
           await prisma.$executeRaw`
@@ -249,6 +244,12 @@ export async function POST(
               ${seed},
               ${stattrak ? 1 : 0}
             )
+            ON DUPLICATE KEY UPDATE
+              knife = VALUES(knife),
+              paint = VALUES(paint),
+              wear = VALUES(wear),
+              seed = VALUES(seed),
+              stattrak = VALUES(stattrak)
           `;
 
           await upsertSkin(
@@ -286,11 +287,6 @@ export async function POST(
         console.log("[GLOVES] glovePaintId:", glovePaintId, "gloveDefindex:", gloveDefindex);
 
         // 1) wp_player_gloves — plugin eldiven tipini buradan okuyor
-        await prisma.$executeRaw`
-          DELETE FROM wp_player_gloves
-          WHERE steamid = ${steamid}
-        `;
-
         for (const team of [2, 3]) {
 
           await prisma.$executeRaw`
