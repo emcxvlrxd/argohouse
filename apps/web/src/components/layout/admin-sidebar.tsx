@@ -19,6 +19,7 @@ import {
   Wifi,
   Server,
   Gauge,
+  MessageCircle,
 } from "lucide-react";
 
 const adminNavItems = [
@@ -30,9 +31,10 @@ const adminNavItems = [
   { href: "/admin/players", label: "Players", icon: Users },
   { href: "/admin/bans", label: "Bans", icon: Ban },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
-  { href: "/admin/logs", label: "Logs", icon: ScrollText },
+  { href: "/admin/complaints", label: "Complaints", icon: MessageCircle },
   { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin/appeals", label: "Appeals", icon: AlertTriangle },
+  { href: "/admin/logs", label: "Logs", icon: ScrollText },
 ];
 
 export function AdminSidebar() {

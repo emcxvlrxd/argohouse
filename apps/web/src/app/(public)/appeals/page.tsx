@@ -64,7 +64,7 @@ export default function AppealsPage() {
     if (!message.trim()) return;
     setSubmitting(true);
     try {
-      const res = await fetch("/api/appeals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: appealType, reason, message }) });
+      const res = await fetch("/api/appeals", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: appealType, reason, message, evidence: previews.length > 0 ? JSON.stringify(previews) : null }) });
       const data = await res.json();
       if (data.success) {
         setSuccessMsg("İtiraz gönderildi!");

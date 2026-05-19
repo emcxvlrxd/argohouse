@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const steamid = (session.user as any).steamid;
-  const { type, reason, message } = await req.json();
+  const { type, reason, message, evidence } = await req.json();
   if (!type || !message) return NextResponse.json({ error: "Type and message required" }, { status: 400 });
   
   // Ensure user exists (fix foreign key constraint)
@@ -30,6 +30,6 @@ export async function POST(req: NextRequest) {
     });
   }
   
-  const appeal = await prisma.appeal.create({ data: { steamid, type, reason: reason || "", message } });
+  const appeal = await prisma.appeal.create({ data: { steamid, type, reason: reason || "", message, evidence: evidence || null } });
   return NextResponse.json({ success: true, appeal });
 }
