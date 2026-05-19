@@ -180,7 +180,7 @@ model Appeal {
   type      String
   reason    String   @db.Text
   message   String   @db.Text
-  evidence  String?  @db.Text
+  evidence  String?  @db.LongText
   status    String   @default("pending")
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
