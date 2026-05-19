@@ -10,7 +10,7 @@ async function syncAdminToServer(steamid64: string, action: "add" | "remove", gr
     if (action === "add") {
       const user = await prisma.user.findUnique({ where: { steamid64 } });
       const name = user?.username || user?.name || "Unknown";
-      const flags = group === "owner" ? "@" : "@";
+      const flags = group === "owner" ? "@css/root" : "@css/admin";
       await sendRconCommand(`css_addadmin ${steamid64} "${name}" ${flags} ${immunity ?? 50} 0`);
     } else {
       await sendRconCommand(`css_removeadmin ${steamid64}`);
