@@ -148,11 +148,15 @@ export function RconConsole() {
                 <span className="text-white">{entry.command}</span>
               </div>
               <div
-                className={`pl-4 ${
+                className={`pl-4 leading-relaxed ${
                   entry.success ? "text-green-400" : "text-red-400"
                 }`}
               >
-                {entry.output}
+                {entry.output.split("\n").map((line, i) => (
+                  <div key={i} className="whitespace-pre-wrap break-all">
+                    {line || "\u00A0"}
+                  </div>
+                ))}
               </div>
             </motion.div>
           ))}
