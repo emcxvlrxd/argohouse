@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { CategoryNav } from "./category-nav";
 import { SkinCard } from "./skin-card";
 import { SkinPreview } from "./skin-preview";
-import { EquippedPanel } from "./equipped-panel";
 import { SkinItem } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -486,9 +485,9 @@ export function WeaponBrowser() {
           )}
         </div>
 
-        {/* Sağ panel: seçili skin varsa preview, yoksa equipped */}
-        <div className="w-72 lg:w-80 shrink-0 overflow-y-auto hidden md:block">
-          {selectedSkin ? (
+        {/* Sağ panel: seçili skin varsa preview */}
+        {selectedSkin && (
+          <div className="w-72 lg:w-80 shrink-0 overflow-y-auto hidden md:block">
             <SkinPreview
               skin={selectedSkin}
               onClose={() => setSelectedSkin(null)}
@@ -496,10 +495,8 @@ export function WeaponBrowser() {
                 handleEquip(p, d, s, w, selectedSkin, extra?.stattrak, extra?.nametag, extra?.team)
               }
             />
-          ) : (
-            <EquippedPanel />
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

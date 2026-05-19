@@ -19,7 +19,7 @@ const WEAR_TIERS = [
 const SEED_MAX = 999;
 const SEED_MARKERS = [
   { value: 0, label: "0" },
-  { value: 270, label: "270 (Mavi)", highlight: true },
+  { value: 270, label: "270", highlight: true },
   { value: 500, label: "500" },
   { value: SEED_MAX, label: String(SEED_MAX) },
 ];
