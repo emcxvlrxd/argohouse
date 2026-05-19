@@ -50,14 +50,14 @@ export default function HomePage() {
 
       <div className="flex">
         <Sidebar
-          isAdmin={(session.user as any)?.role === "admin"}
+          isAdmin={(session.user as any)?.role === "admin" || (session.user as any)?.role === "owner"}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
         />
         <MobileNav
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
-          isAdmin={(session.user as any)?.role === "admin"}
+          isAdmin={(session.user as any)?.role === "admin" || (session.user as any)?.role === "owner"}
         />
 
         <div className="flex-1 min-h-screen lg:pl-64">

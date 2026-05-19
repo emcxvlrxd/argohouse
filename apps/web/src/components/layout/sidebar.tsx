@@ -17,6 +17,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { t } from "@/lib/i18n";
+import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 
 const navItems = [
@@ -41,6 +42,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isAdmin, isOpen, onClose }: SidebarProps) {
+  const { data: session } = useSession();
+  const role = (session?.user as any)?.role;
+  const showAdmin = isAdmin || role === "admin" || role === "owner";
   const pathname = usePathname();
   const [server, setServer] = useState<any>(null);
 
@@ -107,7 +111,7 @@ export function Sidebar({ isAdmin, isOpen, onClose }: SidebarProps) {
             );
           })}
 
-          {isAdmin && (
+          {showAdmin && (
             <>
               <div className="my-3 border-t border-white/10" />
               <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
