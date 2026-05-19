@@ -228,9 +228,12 @@ export function AppealsList() {
               <h3 className="text-lg font-bold mb-2">
                 {actionModal.action === "approve" ? t("Approve Appeal") : t("Deny Appeal")}
               </h3>
-              <p className="text-xs text-muted-foreground mb-4">
-                {actionModal.appeal.username || actionModal.appeal.steamid} — {actionModal.appeal.type} — {actionModal.appeal.reason}
-              </p>
+              <div className="space-y-2 mb-4 text-sm">
+                <div className="flex gap-2"><span className="text-muted-foreground font-medium min-w-[110px]">Kullanıcı:</span><span>{actionModal.appeal.username || actionModal.appeal.steamid}</span></div>
+                <div className="flex gap-2"><span className="text-muted-foreground font-medium min-w-[110px]">İtiraz Türü:</span><span>{actionModal.appeal.type === "ban" ? "Yasak" : actionModal.appeal.type === "mute" ? "Susturma" : actionModal.appeal.type}</span></div>
+                <div className="flex gap-2"><span className="text-muted-foreground font-medium min-w-[110px]">Sebep:</span><span>{actionModal.appeal.reason}</span></div>
+                <div className="flex gap-2"><span className="text-muted-foreground font-medium min-w-[110px]">Kullanıcı Açıklaması:</span><span className="text-muted-foreground">{actionModal.appeal.message}</span></div>
+              </div>
               <div className="space-y-2 mb-4">
                 <label className="text-xs font-semibold text-muted-foreground">{t("Admin Note (reason for decision)")}</label>
                 <textarea
