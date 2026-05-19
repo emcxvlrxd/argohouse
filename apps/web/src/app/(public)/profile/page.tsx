@@ -175,13 +175,14 @@ function ProfileContent() {
                     </div>
                     <div className="flex flex-col gap-4">
                       {equipItems.map((section) => {
+                        const isPerTeam = section.items.some((x: any) => x.weapon_team);
                         const seenKeys = new Set<string>();
-                        const dedupedItems = section.label === t("Agent") ? section.items : section.items.filter((item: any) => {
+                        const dedupedItems = !isPerTeam ? section.items.filter((item: any) => {
                           const key = item.knife || item.weapon || item.music_id || item.id || item.weapon_defindex || "";
                           if (!key || seenKeys.has(String(key))) return false;
                           seenKeys.add(String(key));
                           return true;
-                        });
+                        }) : section.items;
                         if (dedupedItems.length === 0) return null;
                         return (
                         <div key={section.label}>
@@ -200,9 +201,16 @@ function ProfileContent() {
                               if (isAgent) itemImg = item.image || "";
                               if (isMusic) itemImg = item.image || "";
                               if (isPin) itemImg = item.image || "";
-                              const sublabel = isAgent ? (item.team === 2 ? "T" : item.team === 3 ? "CT" : "") : (item.weapon?.replace("weapon_", "") || item.knife?.replace("weapon_", "") || "");
+                              const weaponTeam = item.weapon_team || (isAgent ? (item.team || 0) : 0);
+                              const teamLabel = weaponTeam === 2 ? "T" : weaponTeam === 3 ? "CT" : "";
+                              const sublabel = teamLabel || (item.weapon?.replace("weapon_", "") || item.knife?.replace("weapon_", "") || "");
                               return (
                                 <div key={i} className="group relative flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5 border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/20 transition-all cursor-default">
+                                  {teamLabel && (
+                                    <span className={`absolute -top-1 -right-1 text-[8px] font-bold px-1 rounded-full leading-tight z-10 ${teamLabel === "T" ? "bg-yellow-500 text-black" : "bg-blue-500 text-white"}`}>
+                                      {teamLabel}
+                                    </span>
+                                  )}
                                   <div className="w-8 h-8 rounded-md bg-black/40 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/5">
                                     {itemImg ? (
                                       <img src={itemImg} alt={itemName} className="w-full h-full object-contain" loading="lazy" />
