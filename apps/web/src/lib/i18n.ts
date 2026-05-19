@@ -129,6 +129,14 @@ export const tr: Record<string, string> = {
   "Favorites": "Favoriler",
   "Target:": "Hedef:",
   "Unknown": "Bilinmeyen",
+  "Team": "Takım",
+  "Both": "Her İkisi",
+  "Nametag": "Nametag",
+  "StatTrak": "StatTrak",
+  "Blue Gem": "Mavi Desen",
+  "Seed markers": "Seed işaretleri",
+  "Açık": "Açık",
+  "Kapalı": "Kapalı",
 };
 
 export function t(key: string): string {

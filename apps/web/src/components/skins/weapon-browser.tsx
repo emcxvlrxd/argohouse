@@ -186,7 +186,10 @@ export function WeaponBrowser() {
     defindex: number,
     seed: number,
     wear: number,
-    skin: SkinItem
+    skin: SkinItem,
+    stattrak?: boolean,
+    nametag?: string,
+    team?: number
   ) => {
     if (!session || equipping) return;
 
@@ -214,6 +217,8 @@ export function WeaponBrowser() {
             paintId: cleanPaint,
             seed: cleanSeed,
             wear: cleanWear,
+            stattrak: stattrak ?? false,
+            team: team,
           },
         };
       } else if (activeCategory === "gloves") {
@@ -222,6 +227,8 @@ export function WeaponBrowser() {
           data: {
             gloves: String(cleanPaint),
             defindex: cleanDefindex,
+            seed: cleanSeed,
+            wear: cleanWear,
           },
         };
       } else if (activeCategory === "agents") {
@@ -246,6 +253,9 @@ export function WeaponBrowser() {
             paintId: cleanPaint,
             seed: cleanSeed,
             wear: cleanWear,
+            stattrak: stattrak ?? false,
+            nametag: nametag ?? "",
+            team: team,
           },
         };
       }
@@ -482,7 +492,7 @@ export function WeaponBrowser() {
                 onSelect={() =>
                   setSelectedId(selectedId === skin.id ? null : skin.id ?? null)
                 }
-                onEquip={(p, d, s, w) => handleEquip(p, d, s, w, skin)}
+                onEquip={(p, d, s, w, extra) => handleEquip(p, d, s, w, skin, extra?.stattrak, extra?.nametag, extra?.team)}
               />
             ))}
           </motion.div>

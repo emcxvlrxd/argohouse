@@ -37,7 +37,9 @@ async function upsertSkin(
   paintId: number,
   wear: number,
   seed: number,
-  team: number
+  team: number,
+  stattrak = false,
+  nametag = ""
 ) {
 
   await prisma.$executeRaw`
@@ -74,9 +76,9 @@ async function upsertSkin(
       ${paintId},
       ${wear},
       ${seed},
-      0,
-      '',
-      0,
+      ${stattrak ? 1 : 0},
+      ${nametag},
+      ${stattrak ? 1 : 0},
       0,
       '0;0;0;0;0',
       '0;0;0;0;0;0;0',
@@ -93,7 +95,10 @@ async function upsertSkin(
       weapon_seed = VALUES(weapon_seed),
       paint = VALUES(paint),
       wear = VALUES(wear),
-      seed = VALUES(seed)
+      seed = VALUES(seed),
+      stattrak = VALUES(stattrak),
+      weapon_stattrak = VALUES(weapon_stattrak),
+      weapon_nametag = VALUES(weapon_nametag)
   `;
 }
 
@@ -179,7 +184,12 @@ export async function POST(
             "weapon_ak47"
           ).trim();
 
-        for (const team of [2, 3]) {
+        const stattrak = data?.stattrak === true;
+        const nametag = String(data?.nametag || "").trim();
+
+        const teams = data?.team ? [toNum(data?.team)] : [2, 3];
+
+        for (const t of teams) {
 
           await upsertSkin(
             steamid,
@@ -188,7 +198,9 @@ export async function POST(
             paintId,
             wear,
             seed,
-            team
+            t,
+            stattrak,
+            nametag
           );
 
         }
@@ -208,12 +220,15 @@ export async function POST(
             "weapon_knife"
           ).trim();
 
+        const stattrak = data?.stattrak === true;
+        const teams = data?.team ? [toNum(data?.team)] : [2, 3];
+
         await prisma.$executeRaw`
           DELETE FROM wp_player_knife
           WHERE steamid = ${steamid}
         `;
 
-        for (const team of [2, 3]) {
+        for (const t of teams) {
 
           await prisma.$executeRaw`
             INSERT INTO wp_player_knife (
@@ -228,11 +243,11 @@ export async function POST(
             VALUES (
               ${steamid},
               ${knife},
-              ${team},
+              ${t},
               ${paintId},
               ${wear},
               ${seed},
-              0
+              ${stattrak ? 1 : 0}
             )
           `;
 
@@ -243,7 +258,8 @@ export async function POST(
             paintId,
             wear,
             seed,
-            team
+            t,
+            stattrak
           );
 
         }
