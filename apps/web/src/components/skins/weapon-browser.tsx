@@ -319,43 +319,9 @@ export function WeaponBrowser() {
             <Heart className="w-4 h-4" />
           </button>
 
-          {activeCategory === "agents" && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setAgentTeam(3)}
-                className={cn(
-                  "px-2.5 h-7 rounded-md text-xs border font-medium transition-colors",
-                  agentTeam === 3
-                    ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
-                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
-                )}
-              >
-                CT
-              </button>
-              <button
-                onClick={() => setAgentTeam(2)}
-                className={cn(
-                  "px-2.5 h-7 rounded-md text-xs border font-medium transition-colors",
-                  agentTeam === 2
-                    ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-400"
-                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
-                )}
-              >
-                T
-              </button>
-            </div>
-          )}
-
-          {equipMsg && (
-            <span className="flex items-center gap-1 text-xs text-green-400">
-              <CheckCircle className="w-3 h-3" />
-              {equipMsg}
-            </span>
-          )}
-
-          {/* Filtre dropdown - en sağda */}
+          {/* Filtre dropdown - kalbin yanında */}
           {currentSubOptions.length > 0 && (
-            <div className="relative ml-auto" ref={dropdownRef}>
+            <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setSubMenuOpen((v) => !v)}
                 className={cn(
@@ -431,6 +397,40 @@ export function WeaponBrowser() {
                 )}
               </AnimatePresence>
             </div>
+          )}
+
+          {activeCategory === "agents" && (
+            <div className="flex items-center gap-1 ml-auto">
+              <button
+                onClick={() => setAgentTeam(3)}
+                className={cn(
+                  "px-2.5 h-7 rounded-md text-xs border font-medium transition-colors",
+                  agentTeam === 3
+                    ? "bg-blue-500/20 border-blue-500/50 text-blue-400"
+                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                CT
+              </button>
+              <button
+                onClick={() => setAgentTeam(2)}
+                className={cn(
+                  "px-2.5 h-7 rounded-md text-xs border font-medium transition-colors",
+                  agentTeam === 2
+                    ? "bg-yellow-500/20 border-yellow-500/50 text-yellow-400"
+                    : "border-border bg-background/50 text-muted-foreground hover:text-foreground"
+                )}
+              >
+                T
+              </button>
+            </div>
+          )}
+
+          {equipMsg && (
+            <span className="flex items-center gap-1 text-xs text-green-400">
+              <CheckCircle className="w-3 h-3" />
+              {equipMsg}
+            </span>
           )}
         </div>
 

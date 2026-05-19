@@ -117,19 +117,6 @@ export const authOptions: NextAuthOptions = {
 
       }
 
-      // Force role refresh from DB on every request
-      if (token.steamid64) {
-        try {
-          const dbUser = await prisma.user.findUnique({
-            where: { steamid64: token.steamid64 as string },
-            select: { role: true },
-          });
-          if (dbUser) {
-            token.role = dbUser.role;
-          }
-        } catch {}
-      }
-
       return token;
 
     },
