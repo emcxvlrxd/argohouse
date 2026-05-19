@@ -16,7 +16,14 @@ export async function GET() {
       take: 50,
     });
 
-    return NextResponse.json({ appeals });
+    const enriched = await Promise.all(
+      appeals.map(async (a) => {
+        const user = await prisma.user.findUnique({ where: { steamid: a.steamid }, select: { username: true, avatar: true } });
+        return { ...a, username: user?.username || a.steamid, avatar: user?.avatar || null };
+      })
+    );
+
+    return NextResponse.json({ appeals: enriched });
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch appeals" }, { status: 500 });
   }
@@ -29,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id, action } = await req.json();
+    const { id, action, adminNote } = await req.json();
     const adminSteamid = (session.user as any).steamid;
 
     const appeal = await prisma.appeal.findUnique({ where: { id } });
@@ -38,7 +45,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "approve") {
-      // Unban the user
       await prisma.user.update({
         where: { steamid: appeal.steamid },
         data: { isBanned: false, banReason: null, banExpires: null },
@@ -48,7 +54,7 @@ export async function POST(req: NextRequest) {
     const newStatus = action === "approve" ? "approved" : "denied";
     await prisma.appeal.update({
       where: { id },
-      data: { status: newStatus },
+      data: { status: newStatus, adminNote: adminNote || null },
     });
 
     await prisma.adminLog.create({

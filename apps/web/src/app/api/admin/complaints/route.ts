@@ -36,17 +36,17 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { id, status } = await req.json();
+    const { id, status, adminNote } = await req.json();
     const valid = ["open", "resolved", "dismissed"];
     if (!id || !valid.includes(status)) {
       return NextResponse.json({ error: "id and valid status required" }, { status: 400 });
     }
 
-    await prisma.complaint.update({ where: { id }, data: { status } });
+    await prisma.complaint.update({ where: { id }, data: { status, adminNote: adminNote || null } });
 
     const adminSteamid = (session.user as any).steamid;
     await prisma.adminLog.create({
-      data: { steamid: adminSteamid, action: `${status} complaint #${id}` },
+      data: { steamid: adminSteamid, action: `${status} complaint #${id}`, details: adminNote || null },
     });
 
     return NextResponse.json({ success: true });

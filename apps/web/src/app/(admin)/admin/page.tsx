@@ -76,8 +76,8 @@ export default function AdminDashboardPage() {
   const statCards = [
     { icon: Users, label: t("Total Users"), value: stats?.users || 0, color: "from-blue-500 to-indigo-600" },
     { icon: Palette, label: t("Total Skins"), value: stats?.skins || 0, color: "from-purple-500 to-violet-600" },
-    { icon: Ban, label: t("Knives") + " " + t("Set"), value: stats?.knives || 0, color: "from-rose-500 to-pink-600" },
-    { icon: Terminal, label: t("Gloves") + " " + t("Set"), value: stats?.gloves || 0, color: "from-cyan-500 to-teal-600" },
+    { icon: Ban, label: t("Knives Set"), value: stats?.knives || 0, color: "from-rose-500 to-pink-600" },
+    { icon: Terminal, label: t("Gloves Set"), value: stats?.gloves || 0, color: "from-cyan-500 to-teal-600" },
   ];
 
   return (
@@ -137,7 +137,7 @@ export default function AdminDashboardPage() {
             </div>
           ) : (
             <div className="flex items-center gap-6 text-sm">
-              <div><span className="text-muted-foreground text-xs">Host:</span> <span className="font-mono">{serverInfo?.name || "?"}</span></div>
+              <div><span className="text-muted-foreground text-xs">{t("Host")}:</span> <span className="font-mono">{serverInfo?.name || "?"}</span></div>
               <div><span className="text-muted-foreground text-xs">{t("Map")}:</span> <span className="font-mono text-cyan-300">{serverInfo?.map || "?"}</span></div>
               <div><span className="text-muted-foreground text-xs">{t("Players")}:</span> <span className="font-mono">{serverInfo?.players || "?"}</span></div>
             </div>

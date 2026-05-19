@@ -5,17 +5,21 @@ import { t } from "@/lib/i18n";
 import { GlassCard } from "@/components/ui/glass-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-import { AlertTriangle, Check, X, Eye, ImageIcon } from "lucide-react";
+import { AlertTriangle, Check, X, ImageIcon } from "lucide-react";
 
 interface Appeal {
   id: number;
   steamid: string;
+  username?: string;
+  avatar?: string | null;
   type: string;
   reason: string;
   message: string;
   evidence: string | null;
+  adminNote: string | null;
   status: string;
   created_at: string;
 }
@@ -24,6 +28,8 @@ export function AppealsList() {
   const [appeals, setAppeals] = useState<Appeal[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
+  const [actionModal, setActionModal] = useState<{ appeal: Appeal; action: "approve" | "deny" } | null>(null);
+  const [adminNote, setAdminNote] = useState("");
 
   useEffect(() => {
     const fetchAppeals = async () => {
@@ -43,15 +49,17 @@ export function AppealsList() {
       await fetch("/api/admin/appeals", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, action }),
+        body: JSON.stringify({ id, action, adminNote: adminNote.trim() || undefined }),
       });
       setAppeals((prev) =>
         prev.map((a) =>
           a.id === id
-            ? { ...a, status: action === "approve" ? "approved" : "denied" }
+            ? { ...a, status: action === "approve" ? "approved" : "denied", adminNote: adminNote.trim() || a.adminNote }
             : a
         )
       );
+      setActionModal(null);
+      setAdminNote("");
     } catch {}
   };
 
@@ -133,7 +141,7 @@ export function AppealsList() {
                         {appeal.status === "pending" && (
                           <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                         )}
-                        <p className="text-sm font-medium">{appeal.steamid}</p>
+                        <p className="text-sm font-medium">{appeal.username || appeal.steamid}</p>
                       </div>
                       <p className="text-xs text-muted-foreground">
                         {appeal.type === "ban" ? "Yasak" : appeal.type === "mute" ? "Susturma" : appeal.type} — {appeal.reason}
@@ -164,6 +172,12 @@ export function AppealsList() {
                       )}
                     </div>
                   )}
+                  {appeal.adminNote && (
+                    <div className="mb-3 rounded-lg bg-white/[0.03] border border-white/5 p-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">{t("Admin Note")}</p>
+                      <p className="text-xs text-muted-foreground">{appeal.adminNote}</p>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     {appeal.status === "pending" && (
                       <>
@@ -171,7 +185,7 @@ export function AppealsList() {
                           size="sm"
                           variant="default"
                           className="bg-green-600 hover:bg-green-700 text-xs h-8"
-                          onClick={() => handleAction(appeal.id, "approve")}
+                          onClick={() => { setActionModal({ appeal, action: "approve" }); setAdminNote(""); }}
                         >
                           <Check className="w-3 h-3 mr-1" />
                           {t("Approve")}
@@ -180,7 +194,7 @@ export function AppealsList() {
                           size="sm"
                           variant="destructive"
                           className="text-xs h-8"
-                          onClick={() => handleAction(appeal.id, "deny")}
+                          onClick={() => { setActionModal({ appeal, action: "deny" }); setAdminNote(""); }}
                         >
                           <X className="w-3 h-3 mr-1" />
                           {t("Deny")}
@@ -206,24 +220,68 @@ export function AppealsList() {
         )}
       </GlassCard>
 
+      {/* Action confirmation modal */}
+      {actionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setActionModal(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="mx-4 w-full max-w-md">
+            <GlassCard glow="none" className="p-5">
+              <h3 className="text-lg font-bold mb-2">
+                {actionModal.action === "approve" ? t("Approve Appeal") : t("Deny Appeal")}
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
+                {actionModal.appeal.username || actionModal.appeal.steamid} — {actionModal.appeal.type} — {actionModal.appeal.reason}
+              </p>
+              <div className="space-y-2 mb-4">
+                <label className="text-xs font-semibold text-muted-foreground">{t("Admin Note (reason for decision)")}</label>
+                <textarea
+                  placeholder={actionModal.action === "deny" ? t("Enter reason for denial...") : t("Enter note about resolution...")}
+                  value={adminNote}
+                  onChange={(e) => setAdminNote(e.target.value)}
+                  rows={3}
+                  className="flex w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent resize-none"
+                />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  className="flex-1"
+                  variant={actionModal.action === "approve" ? "default" : "destructive"}
+                  onClick={() => handleAction(actionModal.appeal.id, actionModal.action)}
+                >
+                  {actionModal.action === "approve" ? t("Approve") : t("Deny")}
+                </Button>
+                <Button variant="outline" onClick={() => setActionModal(null)}>{t("Cancel")}</Button>
+              </div>
+            </GlassCard>
+          </div>
+        </div>
+      )}
+
       {/* Evidence viewer modal */}
       {selectedAppeal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAppeal(null)}>
           <div onClick={(e) => e.stopPropagation()} className="w-full max-w-3xl mx-4">
             <GlassCard glow="none" className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold">İtiraz #{selectedAppeal.id} — {selectedAppeal.steamid}</h3>
+                <h3 className="font-semibold">İtiraz #{selectedAppeal.id} — {selectedAppeal.username || selectedAppeal.steamid}</h3>
                 <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setSelectedAppeal(null)}>×</Button>
               </div>
               <p className="text-xs text-muted-foreground mb-1">{selectedAppeal.type} — {selectedAppeal.reason}</p>
               <p className="text-sm mb-4">{selectedAppeal.message}</p>
-              <div className="grid grid-cols-2 gap-3">
-                {parseEvidence(selectedAppeal.evidence).map((img, i) => (
-                  <div key={i} className="rounded-xl overflow-hidden bg-black/50">
-                    <img src={img} alt="" className="w-full h-auto" />
-                  </div>
-                ))}
-              </div>
+              {selectedAppeal.adminNote && (
+                <div className="mb-4 rounded-lg bg-white/[0.03] border border-white/5 p-3">
+                  <p className="text-xs font-bold text-muted-foreground mb-1">{t("Admin Note")}</p>
+                  <p className="text-sm">{selectedAppeal.adminNote}</p>
+                </div>
+              )}
+              {parseEvidence(selectedAppeal.evidence).length > 0 && (
+                <div className="grid grid-cols-2 gap-3">
+                  {parseEvidence(selectedAppeal.evidence).map((img, i) => (
+                    <div key={i} className="rounded-xl overflow-hidden bg-black/50">
+                      <img src={img} alt="" className="w-full h-auto" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </GlassCard>
           </div>
         </div>
