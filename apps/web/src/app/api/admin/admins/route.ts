@@ -9,7 +9,7 @@ async function syncAdminToServer(steamid64: string, action: "add" | "remove", _g
   try {
     if (action === "add") {
       const user = await prisma.user.findUnique({ where: { steamid64 } });
-      const name = user?.username || user?.name || "Unknown";
+      const name = user?.username || "Unknown";
       const imm = immunity ?? 100;
 
       // Remove old records for this steamid
