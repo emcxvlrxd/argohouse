@@ -46,7 +46,7 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: {
-            steamid: credentials.steamid,
+            steamid64: credentials.steamid,
           },
         });
 
@@ -63,22 +63,13 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        // =====================================
-        // FORCE STEAM64
-        // =====================================
-
-        const fixedSteamId =
-          user.steamid64 ||
-          credentials.steamid;
-
         return {
 
           id: user.id,
 
-          // IMPORTANT
-          steamid: fixedSteamId,
+          steamid: user.steamid64 || credentials.steamid,
 
-          steamid64: fixedSteamId,
+          steamid64: user.steamid64 || credentials.steamid,
 
           username: user.username,
 

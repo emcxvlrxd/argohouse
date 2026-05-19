@@ -11,7 +11,7 @@ export function useAuth() {
     isLoading: status === "loading",
     isAdmin:
       status === "authenticated" &&
-      (session?.user as any)?.role === "admin",
+      ((session?.user as any)?.role === "admin" || (session?.user as any)?.role === "owner"),
     isOwner:
       status === "authenticated" &&
       (session?.user as any)?.role === "owner",

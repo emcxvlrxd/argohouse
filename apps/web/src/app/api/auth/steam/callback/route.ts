@@ -16,7 +16,6 @@ export async function GET(req: NextRequest) {
     }
 
     const steam64Id = steamId;
-    const sid = `STEAM_0:${parseInt(steamId) % 2}:${Math.floor(parseInt(steamId) / 2)}`;
 
     const res = await fetch(
       `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${process.env.STEAM_API_KEY}&steamids=${steam64Id}`
@@ -31,7 +30,7 @@ export async function GET(req: NextRequest) {
     }
 
     await prisma.user.upsert({
-      where: { steamid: sid },
+      where: { steamid64: steam64Id },
       update: {
         username: player.personaname,
         avatar: player.avatar,
@@ -39,7 +38,7 @@ export async function GET(req: NextRequest) {
         last_login: new Date(),
       },
       create: {
-        steamid: sid,
+        steamid: "",
         steamid64: steam64Id,
         username: player.personaname,
         avatar: player.avatar,
@@ -49,13 +48,13 @@ export async function GET(req: NextRequest) {
     });
 
     const sig = createHmac("sha256", process.env.NEXTAUTH_SECRET!)
-      .update(sid)
+      .update(steam64Id)
       .digest("hex");
 
     const NEXTAUTH_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
     return NextResponse.redirect(
-      `${NEXTAUTH_URL}/?steam_login=${encodeURIComponent(sid)}&sig=${sig}`
+      `${NEXTAUTH_URL}/?steam_login=${encodeURIComponent(steam64Id)}&sig=${sig}`
     );
   } catch (error: any) {
     return NextResponse.redirect(
