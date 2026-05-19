@@ -21,6 +21,10 @@ interface Player {
   isBanned: boolean;
   last_login: string;
   skinCount: number;
+  knifeCount: number;
+  gloveCount: number;
+  agentCount: number;
+  musicCount: number;
 }
 
 const roleColor: Record<string, "purple" | "info" | "secondary" | "destructive"> = {
@@ -189,7 +193,7 @@ export function PlayerTable() {
                   >
                     <Ban className="w-3.5 h-3.5" />
                   </Button>
-                  <span className="text-xs text-muted-foreground ml-1">{player.skinCount}s</span>
+                  <span className="text-[10px] text-muted-foreground ml-1 font-mono">{player.skinCount}s {player.knifeCount}k {player.gloveCount}g</span>
                 </div>
               </motion.div>
             ))}

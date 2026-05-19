@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
             role: true,
             isBanned: true,
             last_login: true,
-            _count: { select: { skins: true } },
+            _count: { select: { skins: true, knives: true, gloves: true, agents: true, music: true } },
           },
         });
 
@@ -43,6 +43,10 @@ export async function GET(req: NextRequest) {
             isBanned: p.isBanned,
             last_login: p.last_login.toISOString(),
             skinCount: p._count.skins,
+            knifeCount: p._count.knives,
+            gloveCount: p._count.gloves,
+            agentCount: p._count.agents,
+            musicCount: p._count.music,
           })),
         });
       }
@@ -53,12 +57,16 @@ export async function GET(req: NextRequest) {
             role: { in: ["admin", "owner"] },
           },
           select: {
+            id: true,
             steamid: true,
+            steamid64: true,
             username: true,
             avatar: true,
             role: true,
+            adminFlags: true,
             last_login: true,
           },
+          orderBy: { last_login: "desc" },
         });
         return NextResponse.json({ admins });
       }

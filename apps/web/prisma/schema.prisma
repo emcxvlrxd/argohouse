@@ -45,6 +45,7 @@ model User {
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
   last_login    DateTime  @default(now())
+  adminFlags    String?
   isBanned      Boolean   @default(false)
   banReason     String?
   banExpires    DateTime?
