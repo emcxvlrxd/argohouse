@@ -3,6 +3,19 @@ import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { isAdmin, isOwner } from "@/lib/permissions";
+import { sendRconCommand } from "@/lib/rcon";
+
+async function syncAdminToServer(steamid64: string, action: "add" | "remove", group?: string, immunity?: number) {
+  try {
+    if (action === "add") {
+      await sendRconCommand(`css_addadmin ${steamid64} ${group || "admin"} ${immunity ?? 50}`);
+    } else {
+      await sendRconCommand(`css_removeadmin ${steamid64}`);
+    }
+  } catch {
+    // RCON sync failure — log but don't block
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +27,19 @@ export async function POST(req: NextRequest) {
     const { steamid64, flags } = await req.json();
     if (!steamid64) {
       return NextResponse.json({ error: "steamid64 required" }, { status: 400 });
+    }
+
+    // Parse flags to determine AdminPlus group + immunity
+    let group = "admin";
+    let immunity = 50;
+    if (flags) {
+      try {
+        const parsed = JSON.parse(flags);
+        if (parsed.flags?.includes("root")) group = "owner";
+        if (parsed.immunity) immunity = parsed.immunity;
+      } catch {
+        // legacy string flag format
+      }
     }
 
     let user = await prisma.user.findUnique({ where: { steamid64 } });
@@ -37,11 +63,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Sync to AdminPlusMYSQL + SimpleAdmin via RCON
+    await syncAdminToServer(steamid64, "add", group, immunity);
+
     const adminSteamid = (session.user as any).steamid;
     await prisma.adminLog.create({
       data: {
         steamid: adminSteamid,
-        action: `Added admin ${steamid64} with flags "${flags || "@@"}"`,
+        action: `Added admin ${steamid64} with flags "${flags || "@@"}" (group: ${group}, immunity: ${immunity})`,
       },
     });
 
@@ -76,6 +105,9 @@ export async function DELETE(req: NextRequest) {
       where: { steamid64 },
       data: { role: "user", adminFlags: null },
     });
+
+    // Sync remove to AdminPlusMYSQL + SimpleAdmin via RCON
+    await syncAdminToServer(steamid64, "remove");
 
     const adminSteamid = (session.user as any).steamid;
     await prisma.adminLog.create({
