@@ -131,7 +131,11 @@ export default function AdminComplaintsPage() {
               <h3 className="text-lg font-bold mb-2">
                 {actionModal.status === "resolved" ? t("Resolved") : t("Dismissed")}
               </h3>
-              <p className="text-xs text-muted-foreground mb-4">{actionModal.c.title} — {actionModal.c.username}</p>
+              <div className="space-y-2 mb-4 text-sm">
+                <div className="flex gap-2"><span className="text-muted-foreground font-medium min-w-[110px]">Başlık:</span><span>{actionModal.c.title}</span></div>
+                <div className="flex gap-2"><span className="text-muted-foreground font-medium min-w-[110px]">Kullanıcı:</span><span>{actionModal.c.username}</span></div>
+                <div className="flex gap-2"><span className="text-muted-foreground font-medium min-w-[110px]">Mesaj:</span><span className="text-muted-foreground">{actionModal.c.message}</span></div>
+              </div>
               <div className="space-y-2 mb-4">
                 <label className="text-xs font-semibold text-muted-foreground">{t("Admin Note (reason for decision)")}</label>
                 <textarea
