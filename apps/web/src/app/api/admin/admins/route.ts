@@ -5,15 +5,47 @@ import { authOptions } from "@/lib/auth";
 import { isAdmin, isOwner } from "@/lib/permissions";
 import { sendRconCommand } from "@/lib/rcon";
 
-async function syncAdminToServer(steamid64: string, action: "add" | "remove", group?: string, immunity?: number) {
+async function syncAdminToServer(steamid64: string, action: "add" | "remove", _group?: string, immunity?: number) {
   try {
     if (action === "add") {
       const user = await prisma.user.findUnique({ where: { steamid64 } });
       const name = user?.username || user?.name || "Unknown";
-      const flags = group === "owner" ? "@css/root" : "@css/admin";
-      await sendRconCommand(`css_addadmin ${steamid64} "${name}" ${flags} ${immunity ?? 50} 0`);
+      const imm = immunity ?? 100;
+
+      // Remove old records for this steamid
+      const old = await prisma.$queryRawUnsafe(`SELECT id FROM sa_admins WHERE player_steamid = ${steamid64}`);
+      for (const r of old as any[]) {
+        await prisma.$executeRawUnsafe(`DELETE FROM sa_admins_flags WHERE admin_id = ${r.id}`);
+      }
+      await prisma.$executeRawUnsafe(`DELETE FROM sa_admins WHERE player_steamid = ${steamid64}`);
+
+      // Insert new admin record
+      await prisma.$executeRawUnsafe(`INSERT INTO sa_admins (player_name, player_steamid, immunity, server_id) VALUES ('${name}', ${steamid64}, ${imm}, 1)`);
+
+      const inserted = await prisma.$queryRawUnsafe("SELECT LAST_INSERT_ID() as id");
+      const adminId = Number((inserted as any[])[0].id);
+
+      // Insert all root flags
+      const rootFlags = [
+        "@css/root", "@css/generic", "@css/kick", "@css/ban",
+        "@css/unban", "@css/vip", "@css/slay", "@css/changemap",
+        "@css/cvar", "@css/config", "@css/chat", "@css/vote",
+        "@css/password", "@css/rcon", "@css/cheats", "@css/reservation",
+      ];
+      const flagsStr = rootFlags.join(" ");
+      await prisma.$executeRawUnsafe(`UPDATE sa_admins SET flags = '${flagsStr}' WHERE id = ${adminId}`);
+      for (const f of rootFlags) {
+        await prisma.$executeRawUnsafe(`INSERT INTO sa_admins_flags (admin_id, flag) VALUES (${adminId}, '${f}')`);
+      }
+
+      // Trigger plugin reload via RCON
+      await sendRconCommand(`css_addadmin ${steamid64} "${name}" @css/root ${imm} 0`);
     } else {
-      await sendRconCommand(`css_removeadmin ${steamid64}`);
+      const old = await prisma.$queryRawUnsafe(`SELECT id FROM sa_admins WHERE player_steamid = ${steamid64}`);
+      for (const r of old as any[]) {
+        await prisma.$executeRawUnsafe(`DELETE FROM sa_admins_flags WHERE admin_id = ${r.id}`);
+      }
+      await prisma.$executeRawUnsafe(`DELETE FROM sa_admins WHERE player_steamid = ${steamid64}`);
     }
   } catch {
     // RCON sync failure — log but don't block
