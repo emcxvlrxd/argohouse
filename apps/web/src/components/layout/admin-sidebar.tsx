@@ -15,14 +15,19 @@ import {
   AlertTriangle,
   ChevronLeft,
   Crosshair,
+  Wifi,
+  Server,
+  Gauge,
 } from "lucide-react";
 
 const adminNavItems = [
-  { href: "/admin", label: "Dashboard", icon: Shield, exact: true },
+  { href: "/admin", label: "Dashboard", icon: Gauge, exact: true },
+  { href: "/admin/live", label: "Live Players", icon: Wifi },
+  { href: "/admin/server", label: "Server", icon: Server },
   { href: "/admin/console", label: "Console", icon: Terminal },
-  { href: "/admin/bans", label: "Bans", icon: Ban },
   { href: "/admin/rcon", label: "RCON", icon: Terminal },
   { href: "/admin/players", label: "Players", icon: Users },
+  { href: "/admin/bans", label: "Bans", icon: Ban },
   { href: "/admin/admins", label: "Admins", icon: UserCog },
   { href: "/admin/logs", label: "Logs", icon: ScrollText },
   { href: "/admin/reports", label: "Reports", icon: Flag },

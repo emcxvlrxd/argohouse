@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             steamid: true,
+            steamid64: true,
             username: true,
             avatar: true,
             role: true,
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
           players: players.map((p) => ({
             id: p.id,
             steamid: p.steamid,
+            steamid64: p.steamid64,
             username: p.username,
             avatar: p.avatar,
             role: p.role,

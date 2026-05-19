@@ -2,11 +2,37 @@
 
 import { RconConsole } from "@/components/admin/rcon-console";
 import { GlassCard } from "@/components/ui/glass-card";
-import { Terminal, Send, History } from "lucide-react";
+import { Terminal, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { COMMANDS } from "@/lib/rcon";
+import { useState } from "react";
+
+const quickCommands = [
+  { label: "Status", cmd: "status" },
+  { label: "Players", cmd: "listplayers" },
+  { label: "Restart Round", cmd: "mp_restartgame 1" },
+  { label: "Kick Bots", cmd: "bot_kick" },
+  { label: "Restart Match", cmd: "mp_restartgame 5" },
+  { label: "End Warmup", cmd: "mp_warmup_end" },
+  { label: "Say Hello", cmd: `say "Welcome to FENA CS2!"` },
+  { label: "Reload Skins", cmd: "wp_reload" },
+];
 
 export default function RconPage() {
+  const [loadingCmd, setLoadingCmd] = useState<string | null>(null);
+
+  const executeQuick = async (cmd: string) => {
+    setLoadingCmd(cmd);
+    try {
+      await fetch("/api/admin/rcon", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ command: cmd }),
+      });
+    } catch {} finally {
+      setLoadingCmd(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 mb-6">
@@ -24,26 +50,24 @@ export default function RconPage() {
         <div className="lg:col-span-1 space-y-4">
           <GlassCard glow="none">
             <div className="flex items-center gap-2 mb-3">
-              <History className="w-4 h-4 text-muted-foreground" />
+              <Terminal className="w-4 h-4 text-muted-foreground" />
               <h3 className="font-semibold text-sm">Quick Commands</h3>
             </div>
             <div className="space-y-2">
-              {[
-                { label: "Status", cmd: "status" },
-                { label: "Players", cmd: "listplayers" },
-                { label: "Restart Round", cmd: "mp_restartgame_round 1" },
-                { label: "Say Hello", cmd: 'say "Welcome to FENA CS2!"' },
-              ].map((q) => (
+              {quickCommands.map((q) => (
                 <Button
                   key={q.label}
                   variant="outline"
                   size="sm"
                   className="w-full justify-start text-xs font-mono"
-                  onClick={() => {
-                    navigator.clipboard.writeText(q.cmd);
-                  }}
+                  onClick={() => executeQuick(q.cmd)}
+                  disabled={loadingCmd !== null}
                 >
-                  <Send className="w-3 h-3 mr-2" />
+                  {loadingCmd === q.cmd ? (
+                    <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                  ) : (
+                    <Send className="w-3 h-3 mr-2" />
+                  )}
                   {q.label}
                 </Button>
               ))}
