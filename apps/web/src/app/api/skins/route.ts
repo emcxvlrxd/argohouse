@@ -205,7 +205,7 @@ export async function GET(req: NextRequest) {
 
         if (!match) continue;
 
-        const key = `${s.weapon}`;
+        const key = `${s.weapon}-${s.weapon_team}`;
         if (seenSkins.has(key)) continue;
         seenSkins.add(key);
 

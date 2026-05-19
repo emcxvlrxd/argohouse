@@ -75,26 +75,15 @@ function ProfileContent() {
   if (!session) redirect("/");
 
   const displayUser = profileUser || session?.user;
-  const equipItems: { icon: any; label: string; items: any[] }[] = [];
-
-  if (equipment?.skins?.length) {
-    equipItems.push({ icon: Crosshair, label: t("Skin"), items: equipment.skins });
-  }
-  if (equipment?.knife?.length) {
-    equipItems.push({ icon: Swords, label: t("Knife"), items: equipment.knife });
-  }
-  if (equipment?.gloves?.length) {
-    equipItems.push({ icon: HandMetal, label: t("Glove"), items: equipment.gloves });
-  }
-  if (equipment?.agents?.length) {
-    equipItems.push({ icon: Users, label: t("Agent"), items: equipment.agents });
-  }
-  if (equipment?.music?.length) {
-    equipItems.push({ icon: Music, label: t("Music"), items: equipment.music });
-  }
-  if (equipment?.pins?.length) {
-    equipItems.push({ icon: Medal, label: t("Pin"), items: equipment.pins });
-  }
+  // Build team-split equipment data
+  const tKnife = equipment?.knife?.filter((k: any) => k.weapon_team !== 3) || [];
+  const ctKnife = equipment?.knife?.filter((k: any) => k.weapon_team === 3) || [];
+  const tGloves = equipment?.gloves?.filter((g: any) => g.weapon_team !== 3) || [];
+  const ctGloves = equipment?.gloves?.filter((g: any) => g.weapon_team === 3) || [];
+  const tSkins = equipment?.skins?.filter((s: any) => s.weapon_team !== 3) || [];
+  const ctSkins = equipment?.skins?.filter((s: any) => s.weapon_team === 3) || [];
+  const tAgent = equipment?.agents?.find((a: any) => a.agent_t) || null;
+  const ctAgent = equipment?.agents?.find((a: any) => a.agent_ct) || null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -162,7 +151,18 @@ function ProfileContent() {
                   ))}
                 </div>
 
-                {equipItems.length > 0 && (
+                {(() => {
+                  const hasAnyEquipment = tKnife.length || ctKnife.length || tGloves.length || ctGloves.length || tAgent || ctAgent || tSkins.length || ctSkins.length || equipment?.music?.length || equipment?.pins?.length;
+                  if (!hasAnyEquipment) return (
+                    <GlassCard glow="none">
+                      <p className="text-center text-muted-foreground py-8">{t("No equipment data available")}</p>
+                    </GlassCard>
+                  );
+                  const teamColumns = [
+                    { key: "t", badge: "T", badgeColor: "bg-yellow-500 text-black", label: "TERRORIST", knife: tKnife, gloves: tGloves, agent: tAgent, agentField: "agent_t", skins: tSkins },
+                    { key: "ct", badge: "CT", badgeColor: "bg-blue-500 text-white", label: "COUNTER TERRORIST", knife: ctKnife, gloves: ctGloves, agent: ctAgent, agentField: "agent_ct", skins: ctSkins },
+                  ];
+                  return (
                   <GlassCard glow="none">
                     <div className="flex items-center gap-3 mb-5">
                       <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
@@ -173,73 +173,146 @@ function ProfileContent() {
                         <p className="text-[10px] text-muted-foreground">{t("Current loadout")}</p>
                       </div>
                     </div>
-                    <div className="flex flex-col gap-4">
-                      {equipItems.map((section) => {
-                        const isPerTeam = section.items.some((x: any) => x.weapon_team);
-                        const seenKeys = new Set<string>();
-                        const dedupedItems = !isPerTeam ? section.items.filter((item: any) => {
-                          const key = item.knife || item.weapon || item.music_id || item.id || item.weapon_defindex || "";
-                          if (!key || seenKeys.has(String(key))) return false;
-                          seenKeys.add(String(key));
-                          return true;
-                        }) : section.items;
-                        if (dedupedItems.length === 0) return null;
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {teamColumns.map((col) => {
+                        const agentItem = col.agent;
+                        const agentModel = agentItem?.[col.agentField as keyof typeof agentItem] as string || "";
                         return (
-                        <div key={section.label}>
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <section.icon className="w-3.5 h-3.5 text-neon-purple shrink-0" />
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{section.label}</span>
-                            <span className="text-[10px] text-muted-foreground/40">({dedupedItems.length})</span>
+                        <div key={col.key} className={`rounded-lg ${col.key === "t" ? "bg-yellow-500/5 border-yellow-500/10" : "bg-blue-500/5 border-blue-500/10"} border p-3`}>
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className={`text-[10px] font-bold ${col.badgeColor} px-1.5 py-0.5 rounded`}>{col.badge}</span>
+                            <span className="text-xs font-semibold uppercase tracking-wider">{col.label}</span>
                           </div>
-                          <div className="flex flex-wrap gap-2">
-                            {dedupedItems.map((item: any, i: number) => {
-                              const itemName = item.paint_name || item.name || item.weapon || item.knife || "Unknown";
-                              let itemImg = item.cdnImage || toAbsoluteUrl(item.image || "");
-                              const isAgent = section.label === t("Agent");
-                              const isMusic = section.label === t("Music");
-                              const isPin = section.label === t("Pin");
-                              if (isAgent) itemImg = item.image || "";
-                              if (isMusic) itemImg = item.image || "";
-                              if (isPin) itemImg = item.image || "";
-                              const weaponTeam = item.weapon_team || (isAgent ? (item.team || 0) : 0);
-                              const teamLabel = weaponTeam === 2 ? "T" : weaponTeam === 3 ? "CT" : "";
-                              const sublabel = teamLabel || (item.weapon?.replace("weapon_", "") || item.knife?.replace("weapon_", "") || "");
-                              return (
-                                <div key={i} className="group relative flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5 border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/20 transition-all cursor-default">
-                                  {teamLabel && (
-                                    <span className={`absolute -top-1 -right-1 text-[8px] font-bold px-1 rounded-full leading-tight z-10 ${teamLabel === "T" ? "bg-yellow-500 text-black" : "bg-blue-500 text-white"}`}>
-                                      {teamLabel}
-                                    </span>
-                                  )}
-                                  <div className="w-8 h-8 rounded-md bg-black/40 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/5">
-                                    {itemImg ? (
-                                      <img src={itemImg} alt={itemName} className="w-full h-full object-contain" loading="lazy" />
-                                    ) : (
-                                      <section.icon className="w-4 h-4 text-muted-foreground" />
-                                    )}
+                          {col.knife.length > 0 && (
+                            <div className="mb-2.5">
+                              <div className="flex items-center gap-1 mb-1">
+                                <Swords className="w-3 h-3 text-muted-foreground/60" />
+                                <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t("Knife")}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {col.knife.map((item: any, i: number) => {
+                                  const name = item.paint_name || item.knife || "Unknown";
+                                  const img = item.cdnImage || toAbsoluteUrl(item.image || "");
+                                  return (
+                                    <div key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2 py-1 border border-white/[0.06]">
+                                      <div className="w-7 h-7 rounded bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                                        {img ? <img src={img} alt={name} className="w-full h-full object-contain" loading="lazy" /> : <Swords className="w-3.5 h-3.5 text-muted-foreground" />}
+                                      </div>
+                                      <span className="text-[11px] font-medium truncate max-w-[110px] text-white/80">{name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {col.gloves.length > 0 && (
+                            <div className="mb-2.5">
+                              <div className="flex items-center gap-1 mb-1">
+                                <HandMetal className="w-3 h-3 text-muted-foreground/60" />
+                                <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t("Glove")}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {col.gloves.map((item: any, i: number) => {
+                                  const name = item.paint_name || item.gloves || "Unknown";
+                                  const img = item.cdnImage || toAbsoluteUrl(item.image || "");
+                                  return (
+                                    <div key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2 py-1 border border-white/[0.06]">
+                                      <div className="w-7 h-7 rounded bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                                        {img ? <img src={img} alt={name} className="w-full h-full object-contain" loading="lazy" /> : <HandMetal className="w-3.5 h-3.5 text-muted-foreground" />}
+                                      </div>
+                                      <span className="text-[11px] font-medium truncate max-w-[110px] text-white/80">{name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {agentItem && agentModel && (
+                            <div className="mb-2.5">
+                              <div className="flex items-center gap-1 mb-1">
+                                <Users className="w-3 h-3 text-muted-foreground/60" />
+                                <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t("Agent")}</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                <div className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2 py-1 border border-white/[0.06]">
+                                  <div className="w-7 h-7 rounded bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                                    {agentItem.image ? <img src={agentItem.image} alt={agentItem.paint_name || "Agent"} className="w-full h-full object-contain" loading="lazy" /> : <Users className="w-3.5 h-3.5 text-muted-foreground" />}
                                   </div>
-                                  <div className="min-w-0 max-w-[140px]">
-                                    <p className="text-xs font-medium truncate leading-tight text-white/90">{itemName}</p>
-                                    {sublabel && (
-                                      <p className="text-[9px] text-muted-foreground/50 truncate leading-tight">{sublabel}</p>
-                                    )}
-                                  </div>
+                                  <span className="text-[11px] font-medium truncate max-w-[110px] text-white/80">{agentItem.paint_name || "Agent"}</span>
                                 </div>
-                              );
-                            })}
-                          </div>
+                              </div>
+                            </div>
+                          )}
+                          {col.skins.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-1 mb-1">
+                                <Crosshair className="w-3 h-3 text-muted-foreground/60" />
+                                <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t("Skin")}</span>
+                                <span className="text-[9px] text-muted-foreground/30">({col.skins.length})</span>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {col.skins.map((item: any, i: number) => {
+                                  const name = item.paint_name || item.weapon || "Unknown";
+                                  const img = item.cdnImage || toAbsoluteUrl(item.image || "");
+                                  return (
+                                    <div key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2 py-1 border border-white/[0.06]">
+                                      <div className="w-7 h-7 rounded bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                                        {img ? <img src={img} alt={name} className="w-full h-full object-contain" loading="lazy" /> : <Crosshair className="w-3.5 h-3.5 text-muted-foreground" />}
+                                      </div>
+                                      <span className="text-[11px] font-medium truncate max-w-[110px] text-white/80">{name}</span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
                         </div>
                         );
                       })}
                     </div>
+                    {(equipment?.music?.length > 0 || equipment?.pins?.length > 0) && (
+                      <div className="mt-4 pt-3 border-t border-white/10 flex flex-wrap gap-4">
+                        {equipment?.music?.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-1 mb-1">
+                              <Music className="w-3 h-3 text-muted-foreground/60" />
+                              <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t("Music")}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {equipment.music.map((item: any, i: number) => (
+                                <div key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2 py-1 border border-white/[0.06]">
+                                  <div className="w-7 h-7 rounded bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                                    {item.image ? <img src={item.image} alt={item.paint_name || "Music"} className="w-full h-full object-contain" loading="lazy" /> : <Music className="w-3.5 h-3.5 text-muted-foreground" />}
+                                  </div>
+                                  <span className="text-[11px] font-medium truncate max-w-[130px] text-white/80">{item.paint_name || `Music Kit #${item.music_id}`}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {equipment?.pins?.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-1 mb-1">
+                              <Medal className="w-3 h-3 text-muted-foreground/60" />
+                              <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/50">{t("Pin")}</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {equipment.pins.map((item: any, i: number) => (
+                                <div key={i} className="flex items-center gap-1.5 rounded-lg bg-white/[0.03] px-2 py-1 border border-white/[0.06]">
+                                  <div className="w-7 h-7 rounded bg-black/40 flex items-center justify-center shrink-0 overflow-hidden">
+                                    {item.image ? <img src={item.image} alt={item.paint_name || "Pin"} className="w-full h-full object-contain" loading="lazy" /> : <Medal className="w-3.5 h-3.5 text-muted-foreground" />}
+                                  </div>
+                                  <span className="text-[11px] font-medium truncate max-w-[130px] text-white/80">{item.paint_name || `Pin #${item.pin}`}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </GlassCard>
-                )}
-
-                {equipItems.length === 0 && (
-                  <GlassCard glow="none">
-                    <p className="text-center text-muted-foreground py-8">{t("No equipment data available")}</p>
-                  </GlassCard>
-                )}
+                  );
+                })()}
               </>
             )}
           </main>

@@ -19,7 +19,7 @@ export default function AdminLayout({
 
   const currentUser = session?.user as any;
   const currentRole = currentUser?.role;
-  let userWebFlags: string[] = ["*"];
+  let userWebFlags: string[] = [];
   if (currentRole === "owner") {
     userWebFlags = ["*"];
   } else if (currentUser?.adminFlags) {

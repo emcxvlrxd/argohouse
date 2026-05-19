@@ -79,6 +79,8 @@ export const authOptions: NextAuthOptions = {
 
           role: user.role,
 
+          adminFlags: user.adminFlags,
+
         };
 
       },
@@ -115,6 +117,22 @@ export const authOptions: NextAuthOptions = {
         token.avatarfull =
           (user as any).avatarfull;
 
+        token.adminFlags =
+          (user as any).adminFlags;
+
+      } else {
+        // token refresh — fetch fresh adminFlags & role from DB
+        const sid = token.steamid64 as string;
+        if (sid) {
+          const dbUser = await prisma.user.findUnique({
+            where: { steamid64: sid },
+            select: { adminFlags: true, role: true },
+          });
+          if (dbUser) {
+            token.adminFlags = dbUser.adminFlags;
+            token.role = dbUser.role;
+          }
+        }
       }
 
       return token;
@@ -146,6 +164,9 @@ export const authOptions: NextAuthOptions = {
 
         (session.user as any).avatarfull =
           token.avatarfull;
+
+        (session.user as any).adminFlags =
+          token.adminFlags;
 
       }
 
