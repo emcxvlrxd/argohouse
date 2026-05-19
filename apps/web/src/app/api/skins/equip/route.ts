@@ -221,6 +221,7 @@ export async function POST(
           ).trim();
 
         const stattrak = data?.stattrak === true;
+        const nametag = String(data?.nametag || "").trim();
         const teams = data?.team ? [toNum(data?.team)] : [2, 3];
 
         for (const t of teams) {
@@ -260,7 +261,8 @@ export async function POST(
             wear,
             seed,
             t,
-            stattrak
+            stattrak,
+            nametag
           );
 
         }

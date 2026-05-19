@@ -208,6 +208,7 @@ export function WeaponBrowser() {
             seed: cleanSeed,
             wear: cleanWear,
             stattrak: stattrak ?? false,
+            nametag: nametag ?? "",
             team: team,
           },
         };

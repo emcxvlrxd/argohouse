@@ -164,18 +164,17 @@ function ProfileContent() {
 
                 {equipItems.length > 0 && (
                   <GlassCard glow="none">
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-                        <Palette className="w-5 h-5 text-white" />
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                        <Palette className="w-4.5 h-4.5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold">{t("Equipment")}</h3>
-                        <p className="text-xs text-muted-foreground">{t("Current loadout")}</p>
+                        <h3 className="font-semibold text-sm">{t("Equipment")}</h3>
+                        <p className="text-[10px] text-muted-foreground">{t("Current loadout")}</p>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="flex flex-col gap-4">
                       {equipItems.map((section) => {
-                        // Deduplicate: agents keep both T/CT, others show unique by item key
                         const seenKeys = new Set<string>();
                         const dedupedItems = section.label === t("Agent") ? section.items : section.items.filter((item: any) => {
                           const key = item.knife || item.weapon || item.music_id || item.id || item.weapon_defindex || "";
@@ -183,16 +182,15 @@ function ProfileContent() {
                           seenKeys.add(String(key));
                           return true;
                         });
+                        if (dedupedItems.length === 0) return null;
                         return (
-                        <div key={section.label} className="space-y-2">
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground/60 uppercase tracking-wider border-b border-white/5 pb-2">
-                            <section.icon className="w-4 h-4 text-neon-purple" />
-                            <span className="font-semibold">{section.label}</span>
+                        <div key={section.label}>
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <section.icon className="w-3.5 h-3.5 text-neon-purple shrink-0" />
+                            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">{section.label}</span>
+                            <span className="text-[10px] text-muted-foreground/40">({dedupedItems.length})</span>
                           </div>
-                          <div className="space-y-1.5">
-                            {dedupedItems.length === 0 && (
-                              <p className="text-[10px] text-muted-foreground/40 text-center py-3">Yok</p>
-                            )}
+                          <div className="flex flex-wrap gap-2">
                             {dedupedItems.map((item: any, i: number) => {
                               const itemName = item.paint_name || item.name || item.weapon || item.knife || "Unknown";
                               let itemImg = item.cdnImage || toAbsoluteUrl(item.image || "");
@@ -204,18 +202,18 @@ function ProfileContent() {
                               if (isPin) itemImg = item.image || "";
                               const sublabel = isAgent ? (item.team === 2 ? "T" : item.team === 3 ? "CT" : "") : (item.weapon?.replace("weapon_", "") || item.knife?.replace("weapon_", "") || "");
                               return (
-                                <div key={i} className="flex items-center gap-3 rounded-lg bg-white/[0.03] p-2 border border-white/[0.06] hover:bg-white/[0.06] transition-colors">
-                                  <div className="w-10 h-10 rounded-lg bg-black/40 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/5">
+                                <div key={i} className="group relative flex items-center gap-2 rounded-lg bg-white/[0.03] px-2.5 py-1.5 border border-white/[0.06] hover:bg-white/[0.06] hover:border-white/20 transition-all cursor-default">
+                                  <div className="w-8 h-8 rounded-md bg-black/40 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/5">
                                     {itemImg ? (
                                       <img src={itemImg} alt={itemName} className="w-full h-full object-contain" loading="lazy" />
                                     ) : (
-                                      <section.icon className="w-5 h-5 text-muted-foreground" />
+                                      <section.icon className="w-4 h-4 text-muted-foreground" />
                                     )}
                                   </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium truncate leading-tight text-white/90">{itemName}</p>
+                                  <div className="min-w-0 max-w-[140px]">
+                                    <p className="text-xs font-medium truncate leading-tight text-white/90">{itemName}</p>
                                     {sublabel && (
-                                      <p className="text-[10px] text-muted-foreground/60 truncate leading-tight mt-0.5">{sublabel}</p>
+                                      <p className="text-[9px] text-muted-foreground/50 truncate leading-tight">{sublabel}</p>
                                     )}
                                   </div>
                                 </div>
