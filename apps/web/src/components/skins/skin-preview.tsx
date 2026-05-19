@@ -93,8 +93,16 @@ export function SkinPreview({ skin, onEquip, onClose }: SkinPreviewProps) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Shuffle className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-              <span className="text-[11px] text-muted-foreground flex-1">{t("Seed")}</span>
-              <span className="font-mono text-[11px] text-purple-300">{seed}</span>
+              <span className="text-[11px] text-muted-foreground">{t("Seed")}</span>
+              <div className="flex-1" />
+              <input
+                type="number"
+                min="0"
+                max={SEED_MAX}
+                value={seed}
+                onChange={(e) => setSeed(Math.max(0, Math.min(SEED_MAX, Number(e.target.value) || 0)))}
+                className="w-16 h-6 px-1.5 rounded border border-white/10 bg-black/30 text-[10px] font-mono text-purple-300 text-right outline-none focus:border-purple-500/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
             </div>
             <input
               type="range"
@@ -131,8 +139,17 @@ export function SkinPreview({ skin, onEquip, onClose }: SkinPreviewProps) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Droplets className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span className="text-[11px] text-muted-foreground flex-1">{t("Wear")}</span>
-              <span className="font-mono text-[11px] text-cyan-300">{wear.toFixed(4)}</span>
+              <span className="text-[11px] text-muted-foreground">{t("Wear")}</span>
+              <div className="flex-1" />
+              <input
+                type="number"
+                min="0"
+                max="1"
+                step="0.0001"
+                value={wear}
+                onChange={(e) => setWear(Math.max(0, Math.min(1, Number(e.target.value) || 0)))}
+                className="w-20 h-6 px-1.5 rounded border border-white/10 bg-black/30 text-[10px] font-mono text-cyan-300 text-right outline-none focus:border-cyan-500/50 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
             </div>
             <input
               type="range"

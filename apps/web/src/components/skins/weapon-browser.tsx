@@ -352,17 +352,8 @@ export function WeaponBrowser() {
               {equipMsg}
             </span>
           )}
-        </div>
 
-        <div className="flex items-center gap-2">
-          <CategoryNav
-            active={activeCategory}
-            onSelect={(cat) => {
-              setActiveCategory(cat);
-              setSubMenuOpen(false);
-            }}
-          />
-
+          {/* Filtre dropdown - en sağda */}
           {currentSubOptions.length > 0 && (
             <div className="relative ml-auto" ref={dropdownRef}>
               <button
@@ -441,6 +432,16 @@ export function WeaponBrowser() {
               </AnimatePresence>
             </div>
           )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <CategoryNav
+            active={activeCategory}
+            onSelect={(cat) => {
+              setActiveCategory(cat);
+              setSubMenuOpen(false);
+            }}
+          />
         </div>
       </div>
 
